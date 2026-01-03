@@ -1,0 +1,10 @@
+.env
+.env.local
+.idea
+node_modules
+dist
+.DS_Store
+.vscode
+.cursor
+.playwright-mcp
+signing_keys.json

@@ -1,0 +1,26 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+    open-pull-requests-limit: 1
+    reviewers:
+      - "dean-journeyapps"
+      - "joshua-journey-apps"
+      - "michaelbarnes"
+    ignore:
+      # Ignore major version updates for critical deps
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+    # Allow security updates for all dependencies
+    allow:
+      - dependency-type: "all"
+    groups:
+      # Single group for all dependencies
+      all-dependencies:
+        patterns:
+          - "*"

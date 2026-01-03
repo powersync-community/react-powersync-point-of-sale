@@ -1,0 +1,147 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+/* Tailwind CSS v4 Configuration */
+@theme {
+  /* Colors */
+  --color-background: hsl(222 47% 6%);
+  --color-foreground: hsl(210 40% 98%);
+  --color-card: hsl(222 47% 8%);
+  --color-card-foreground: hsl(210 40% 98%);
+  --color-popover: hsl(222 47% 8%);
+  --color-popover-foreground: hsl(210 40% 98%);
+  --color-primary: hsl(142 76% 46%);
+  --color-primary-foreground: hsl(0 0% 100%);
+  --color-secondary: hsl(217 33% 17%);
+  --color-secondary-foreground: hsl(210 40% 98%);
+  --color-muted: hsl(217 33% 17%);
+  --color-muted-foreground: hsl(215 20% 65%);
+  --color-accent: hsl(45 93% 58%);
+  --color-accent-foreground: hsl(222 47% 6%);
+  --color-destructive: hsl(0 84% 60%);
+  --color-destructive-foreground: hsl(0 0% 100%);
+  --color-success: hsl(142 76% 46%);
+  --color-success-foreground: hsl(0 0% 100%);
+  --color-border: hsl(217 33% 20%);
+  --color-input: hsl(217 33% 20%);
+  --color-ring: hsl(142 76% 46%);
+
+  /* Border radius */
+  --radius-sm: calc(0.75rem - 4px);
+  --radius-md: calc(0.75rem - 2px);
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+
+  /* Font family */
+  --font-sans: "JetBrains Mono", monospace;
+
+  /* Animations */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-fade-in: fade-in 0.3s ease-out;
+  --animate-slide-in-right: slide-in-right 0.3s ease-out;
+  --animate-pulse-success: pulse-success 1s ease-in-out;
+
+  @keyframes accordion-down {
+    from { height: 0; }
+    to { height: var(--radix-accordion-content-height); }
+  }
+
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height); }
+    to { height: 0; }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slide-in-right {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+
+  @keyframes pulse-success {
+    0%, 100% { box-shadow: 0 0 0 0 hsl(142 76% 46% / 0.4); }
+    50% { box-shadow: 0 0 0 8px hsl(142 76% 46% / 0); }
+  }
+}
+
+/* Source paths for Tailwind to scan */
+@source "../src/**/*.{js,ts,jsx,tsx}";
+
+/* Base styles */
+* {
+  border-color: var(--color-border);
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--color-background);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-muted);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(215 20% 65% / 0.5);
+}
+
+/* Utility classes */
+.pos-touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.pos-card {
+  background-color: var(--color-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  padding: 1rem;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+.pos-price {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pos-grid-item {
+  transition: all 200ms;
+}
+
+.pos-grid-item:hover {
+  transform: scale(1.02);
+}
+
+.pos-grid-item:active {
+  transform: scale(0.98);
+}
+
+.gradient-primary {
+  background: linear-gradient(135deg, var(--color-primary) 0%, hsl(142 76% 36%) 100%);
+}
+
+.gradient-card {
+  background: linear-gradient(180deg, var(--color-card) 0%, var(--color-background) 100%);
+}
+
+.text-shadow {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
