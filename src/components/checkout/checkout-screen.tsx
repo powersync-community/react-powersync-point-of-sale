@@ -89,7 +89,7 @@ export function CheckoutScreen() {
             {/* Receipt Details */}
             <div className="bg-muted/30 rounded-lg p-4 space-y-3 print:bg-white print:border">
               <div className="text-center border-b border-border pb-3">
-                <h3 className="font-bold text-lg">RetailPOS</h3>
+                <h3 className="font-bold text-lg">PowerSync POS Demo</h3>
                 <p className="text-xs text-muted-foreground">
                   Sale Receipt
                 </p>
@@ -169,7 +169,7 @@ export function CheckoutScreen() {
       </div>
 
       {/* Right side - Payment */}
-      <div className="w-96 border-l border-border bg-card p-6 flex flex-col">
+      <div className="w-96 border-l border-border p-6 flex flex-col">
         <h2 className="text-xl font-bold mb-6">Payment</h2>
 
         <div className="flex-1 flex flex-col justify-center">

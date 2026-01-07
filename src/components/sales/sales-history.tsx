@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { useQuery } from "@powersync/react";
+import { useLiveQuery } from "@tanstack/react-db";
+import { eq } from "@tanstack/db";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
@@ -17,16 +18,21 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
-  SALES_TABLE,
-  SALE_ITEMS_TABLE,
-  PRODUCTS_TABLE,
-  type SaleRecord,
-  type SaleItemRecord,
-} from "@/powersync/AppSchema";
+  salesCollection,
+  saleItemsCollection,
+  productsCollection,
+} from "@/collections";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 /** Extended sale item with product info */
-interface SaleItemWithProduct extends SaleItemRecord {
+interface SaleItemWithProduct {
+  id: string;
+  sale_id: string | null;
+  product_id: string | null;
+  quantity: number;
+  unit_price: number;
+  subtotal: number;
+  created_at: Date | null;
   product_name: string | null;
   product_image: string | null;
 }
@@ -38,21 +44,45 @@ interface SaleItemWithProduct extends SaleItemRecord {
 export function SalesHistory() {
   const [selectedSale, setSelectedSale] = useState<string | null>(null);
 
-  // Fetch all sales
-  const { data: sales, isLoading: salesLoading } = useQuery<SaleRecord>(
-    `SELECT * FROM ${SALES_TABLE} ORDER BY created_at DESC`,
-    []
+  // Fetch all sales using TanStack DB liveQuery
+  const { data: sales = [], isLoading: salesLoading } = useLiveQuery((q) =>
+    q
+      .from({ sale: salesCollection })
+      .orderBy(({ sale }) => sale.created_at, "desc")
   );
 
   // Fetch items for selected sale
-  const { data: saleItems } = useQuery<SaleItemWithProduct>(
-    `SELECT si.*, p.name as product_name, p.image_url as product_image 
-     FROM ${SALE_ITEMS_TABLE} si 
-     LEFT JOIN ${PRODUCTS_TABLE} p ON si.product_id = p.id 
-     WHERE si.sale_id = ?`,
-    [selectedSale ?? ""],
-    { runQueryOnce: !selectedSale }
+  const { data: rawSaleItems = [] } = useLiveQuery(
+    (q) =>
+      q
+        .from({ si: saleItemsCollection })
+        .where(({ si }) => eq(si.sale_id, selectedSale)),
+    [selectedSale]
   );
+
+  // Fetch all products for lookup
+  const { data: products = [] } = useLiveQuery((q) =>
+    q.from({ p: productsCollection })
+  );
+
+  // Merge sale items with product info
+  const saleItems = useMemo<SaleItemWithProduct[]>(() => {
+    const productMap = new Map(products.map((p) => [p.id, p]));
+    return rawSaleItems.map((item) => {
+      const product = item.product_id ? productMap.get(item.product_id) : null;
+      return {
+        id: item.id,
+        sale_id: item.sale_id,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        subtotal: item.subtotal,
+        created_at: item.created_at,
+        product_name: product?.name ?? null,
+        product_image: product?.image_url ?? null,
+      };
+    });
+  }, [rawSaleItems, products]);
 
   // Get selected sale details
   const selectedSaleData = useMemo(
@@ -89,7 +119,7 @@ export function SalesHistory() {
   return (
     <div className="h-full flex">
       {/* Sales List */}
-      <div className="w-[400px] border-r border-border flex flex-col bg-card">
+      <div className="w-[400px] border-r border-border flex flex-col">
         {/* Header */}
         <div className="p-4 border-b border-border">
           <div className="flex items-center gap-3 mb-4">

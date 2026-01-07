@@ -59,7 +59,7 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["JetBrains Mono", "monospace"],
+        sans: ["Fira Sans", "sans-serif"],
       },
       keyframes: {
         "accordion-down": {

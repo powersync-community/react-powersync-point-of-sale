@@ -25,7 +25,7 @@ export function CartSidebar() {
     useCart();
 
   return (
-    <div className="h-full flex flex-col bg-card">
+    <div className="h-full flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between">

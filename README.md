@@ -1,4 +1,4 @@
-# RetailPOS - Point of Sale System
+# PowerSync POS Demo
 
 A modern, offline-first Point of Sale system built with React, PowerSync, and Supabase. Designed for retail stores with local-first capabilities for seamless operation even without internet connectivity.
 

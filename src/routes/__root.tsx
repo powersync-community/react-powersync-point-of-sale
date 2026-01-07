@@ -11,12 +11,12 @@ function RootComponent() {
   const status = useStatus();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen flex flex-col overflow-hidden" style={{ background: 'rgb(0, 19, 31)' }}>
       {/* Connectivity Status Bar */}
       <div className="h-8 bg-card border-b border-border flex items-center justify-between px-4 text-xs">
         <div className="flex items-center gap-4">
           <span className="text-muted-foreground font-medium">
-            RetailPOS
+            PowerSync POS Demo
           </span>
         </div>
         

@@ -1,11 +1,10 @@
-import { useMemo } from "react";
-import { useQuery } from "@powersync/react";
+import { useLiveQuery } from "@tanstack/react-db";
+import { eq, like, or } from "@tanstack/db";
 import { Search, PackageX } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ProductCard } from "./product-card";
-import { PRODUCTS_TABLE, type ProductRecord } from "@/powersync/AppSchema";
-import type { Product } from "@/collections/products";
+import { productsCollection } from "@/collections";
 import { useCart } from "@/contexts/cart-context";
 
 interface ProductGridProps {
@@ -25,47 +24,30 @@ export function ProductGrid({
 }: ProductGridProps) {
   const { addItem } = useCart();
 
-  // Build query based on filters
-  const query = useMemo(() => {
-    let sql = `SELECT * FROM ${PRODUCTS_TABLE} WHERE is_active = 1`;
-    const params: (string | number)[] = [];
+  // Fetch products using TanStack DB liveQuery with filters
+  const { data: products = [], isLoading } = useLiveQuery(
+    (q) => {
+      // Start with base query for active products
+      let query = q
+        .from({ p: productsCollection })
+        .where(({ p }) => eq(p.is_active, true));
 
-    if (selectedCategory) {
-      sql += ` AND category_id = ?`;
-      params.push(selectedCategory);
-    }
+      // Apply category filter if selected
+      if (selectedCategory) {
+        query = query.where(({ p }) => eq(p.category_id, selectedCategory));
+      }
 
-    if (searchQuery.trim()) {
-      sql += ` AND (name LIKE ? OR sku LIKE ?)`;
-      const searchTerm = `%${searchQuery.trim()}%`;
-      params.push(searchTerm, searchTerm);
-    }
+      // Apply search filter if provided
+      if (searchQuery.trim()) {
+        const searchTerm = `%${searchQuery.trim()}%`;
+        query = query.where(({ p }) =>
+          or(like(p.name, searchTerm), like(p.sku, searchTerm))
+        );
+      }
 
-    sql += ` ORDER BY name ASC`;
-
-    return { sql, params };
-  }, [selectedCategory, searchQuery]);
-
-  const { data: products, isLoading } = useQuery<ProductRecord>(
-    query.sql,
-    query.params
-  );
-
-  // Transform to Product type
-  const transformedProducts: Product[] = useMemo(
-    () =>
-      products.map((p) => ({
-        id: p.id,
-        category_id: p.category_id,
-        name: p.name,
-        sku: p.sku,
-        price: p.price ?? 0,
-        image_url: p.image_url,
-        stock_quantity: p.stock_quantity ?? 0,
-        is_active: (p.is_active ?? 0) > 0,
-        created_at: p.created_at ? new Date(p.created_at) : null,
-      })),
-    [products]
+      return query.orderBy(({ p }) => p.name, "asc");
+    },
+    [selectedCategory, searchQuery]
   );
 
   return (
@@ -99,7 +81,7 @@ export function ProductGrid({
                 </div>
               ))}
             </div>
-          ) : transformedProducts.length === 0 ? (
+          ) : products.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
               <PackageX className="h-16 w-16 mb-4" />
               <h3 className="text-lg font-medium">No products found</h3>
@@ -111,7 +93,7 @@ export function ProductGrid({
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {transformedProducts.map((product) => (
+              {products.map((product) => (
                 <ProductCard
                   key={product.id}
                   product={product}
@@ -125,8 +107,8 @@ export function ProductGrid({
 
       {/* Product Count */}
       <div className="p-2 border-t border-border text-center text-xs text-muted-foreground">
-        {transformedProducts.length} product
-        {transformedProducts.length !== 1 && "s"} found
+        {products.length} product
+        {products.length !== 1 && "s"} found
       </div>
     </div>
   );
