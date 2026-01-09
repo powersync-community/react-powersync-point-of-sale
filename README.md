@@ -1,51 +1,41 @@
 # PowerSync POS Demo
 
-A modern, offline-first Point of Sale system built with React, PowerSync, and Supabase. Designed for retail stores with local-first capabilities for seamless operation even without internet connectivity.
-
-## Features
-
-- **PIN-Based Authentication**: Quick cashier login with 4-digit PIN
-- **Product Catalog**: Browse products by category with search functionality
-- **Shopping Cart**: Add products, adjust quantities, and view running totals
-- **Checkout Process**: Simple "Mark as Paid" workflow for completing sales
-- **Sales History**: View completed transactions with detailed breakdowns
-- **Offline-First**: Works offline and syncs when connectivity is restored
-- **Real-time Sync**: Data automatically synchronizes across devices via PowerSync
+A demo offline-first Point of Sale system built with React, PowerSync, and Supabase. 
 
 ## Tech Stack
 
 - **Frontend**: React 19 with TypeScript
-- **Routing**: TanStack Router
+- **Routing**: [TanStack Router](https://tanstack.com/router/latest/docs/framework/react/overview)
 - **Styling**: Tailwind CSS v4 with custom dark theme
-- **State Management**: TanStack DB Collections with PowerSync
-- **Database**: PowerSync (local SQLite) + Supabase (PostgreSQL)
+- **State Management**: [TanStack DB Collections](https://tanstack.com/db/latest/docs/collections/powersync-collection) with the [PowerSync Web SDK](https://docs.powersync.com/client-sdk-references/javascript-web)
+- **Source Database**: [Supabase](https://supabase.com/docs) (PostgreSQL)
 - **Build Tool**: Vite
 
 ## Getting Started
 
 ### 1. Install Dependencies
 
-```bash
-pnpm install
-```
+   ```bash
+   pnpm install
+   ```
 
 ### 2. Configure Environment Variables
 
 Create a `.env` file in the root directory:
 
-```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
-VITE_POWERSYNC_URL=your_powersync_url
-```
+   ```env
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+   VITE_POWERSYNC_URL=your_powersync_url
+   ```
 
 ### 3. Set Up Supabase
 
 Run the migration to create the necessary tables:
 
-```bash
-supabase db push
-```
+   ```bash
+   pnpm dev:supabase
+   ```
 
 Or apply the migration manually from `supabase/migrations/20250103000000_pos_tables.sql`.
 
@@ -134,8 +124,7 @@ To run PowerSync locally alongside local Supabase:
 
 3. Start the PowerSync container:
    ```bash
-   cd powersync
-   docker compose up -d
+   pnpm dev:powersync:start
    ```
 
    > **Note**: The PowerSync container joins the Supabase Docker network (`supabase_network_powersync`) to communicate with Supabase services. The JWKS endpoint is accessed via `supabase_kong_powersync:8000` internally.
@@ -145,6 +134,15 @@ To run PowerSync locally alongside local Supabase:
    VITE_SUPABASE_URL=http://127.0.0.1:54321
    VITE_SUPABASE_PUBLISHABLE_KEY=your_local_publish_key
    VITE_POWERSYNC_URL=http://127.0.0.1:8080
+   ```
+
+5. To stop or restart the PowerSync container run
+   ```bash
+   # Stop the PowerSync Container
+   pnpm dev:powersync:stop
+
+   # Start the PowerSync Container
+   pnpm dev:powersync:stop
    ```
 
 ### 7. Start Development Server
@@ -162,24 +160,6 @@ The app works in demo mode without a configured backend:
 - Products and categories won't appear (no data synced)
 - Sales can be created but won't persist after refresh
 
-## Project Structure
-
-```
-src/
-├── components/
-│   ├── auth/          # PIN login screen
-│   ├── cart/          # Shopping cart sidebar
-│   ├── catalog/       # Product catalog & categories
-│   ├── checkout/      # Checkout flow
-│   ├── sales/         # Sales history
-│   └── ui/            # Reusable UI components
-├── collections/       # TanStack DB collections
-├── contexts/          # React contexts (auth, cart)
-├── lib/               # Utility functions
-├── powersync/         # PowerSync configuration
-└── routes/            # TanStack Router routes
-```
-
 ## Database Schema
 
 The POS system uses the following tables:
@@ -193,6 +173,9 @@ The POS system uses the following tables:
 ## Available Scripts
 
 - `pnpm dev:ui` - Start development server
+- `pnpm dev:supabase` - Start Supabase locally
+- `pnpm dev:powersync:start` - Start the PowerSync Service locally
+- `pnpm dev:powersync:stop` - Stop the PowerSync Service
 - `pnpm build` - Build for production
 - `pnpm preview` - Preview production build
 - `pnpm type-check` - Run TypeScript type checking
@@ -204,7 +187,3 @@ For demo/development purposes, the following PINs are available:
 - `1234` - Demo Cashier
 - `5678` - John Smith
 - `9012` - Jane Doe
-
-## License
-
-MIT
