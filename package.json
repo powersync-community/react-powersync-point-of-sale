@@ -16,11 +16,13 @@
   },
   "dependencies": {
     "@journeyapps/wa-sqlite": "^1.4.1",
+    "@powersync/common": "^1.45.0",
     "@powersync/react": "^1.8.2",
     "@powersync/web": "^1.31.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@supabase/supabase-js": "^2.87.1",
     "@tailwindcss/postcss": "^4.1.18",
+    "@tanstack/db": "^0.5.18",
     "@tanstack/powersync-db-collection": "^0.1.20",
     "@tanstack/react-db": "^0.1.60",
     "@tanstack/react-devtools": "^0.9.1",
