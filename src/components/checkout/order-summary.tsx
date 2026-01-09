@@ -8,23 +8,17 @@ interface OrderSummaryProps {
   total: number;
 }
 
-/**
- * Order Summary component
- * Displays itemized list of cart contents for checkout
- */
 export function OrderSummary({ items, total }: OrderSummaryProps) {
   return (
     <div className="space-y-4">
       <h3 className="font-semibold text-lg">Order Summary</h3>
 
-      {/* Items List */}
       <div className="space-y-3">
         {items.map((item) => (
           <div
             key={item.id}
             className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg"
           >
-            {/* Image */}
             <div className="h-12 w-12 rounded-md overflow-hidden bg-muted shrink-0">
               {item.product.image_url ? (
                 <img
@@ -39,7 +33,6 @@ export function OrderSummary({ items, total }: OrderSummaryProps) {
               )}
             </div>
 
-            {/* Details */}
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm truncate">
                 {item.product.name}
@@ -49,7 +42,6 @@ export function OrderSummary({ items, total }: OrderSummaryProps) {
               </p>
             </div>
 
-            {/* Subtotal */}
             <p className="pos-price text-sm font-semibold">
               {formatCurrency(item.subtotal)}
             </p>
@@ -59,7 +51,6 @@ export function OrderSummary({ items, total }: OrderSummaryProps) {
 
       <Separator />
 
-      {/* Totals */}
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Subtotal</span>
@@ -80,4 +71,3 @@ export function OrderSummary({ items, total }: OrderSummaryProps) {
     </div>
   );
 }
-

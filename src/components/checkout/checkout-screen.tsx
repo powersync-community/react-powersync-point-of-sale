@@ -14,10 +14,6 @@ import { useCart } from "@/contexts/cart-context";
 import { useAuth } from "@/contexts/auth-context";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
-/**
- * Checkout Screen component
- * Handles payment completion and receipt display
- */
 export function CheckoutScreen() {
   const navigate = useNavigate();
   const { cashier } = useAuth();
@@ -25,7 +21,6 @@ export function CheckoutScreen() {
   const [completedSaleId, setCompletedSaleId] = useState<string | null>(null);
   const [completedAt, setCompletedAt] = useState<Date | null>(null);
 
-  /** Handle payment completion */
   const handleMarkAsPaid = async () => {
     const saleId = await completeSale();
     if (saleId) {
@@ -34,19 +29,16 @@ export function CheckoutScreen() {
     }
   };
 
-  /** Handle starting new sale */
   const handleNewSale = () => {
     setCompletedSaleId(null);
     setCompletedAt(null);
     navigate({ to: "/" });
   };
 
-  /** Handle print receipt */
   const handlePrintReceipt = () => {
     window.print();
   };
 
-  // Empty cart - redirect back
   if (items.length === 0 && !completedSaleId) {
     return (
       <div className="h-full flex items-center justify-center p-8">
@@ -67,13 +59,11 @@ export function CheckoutScreen() {
     );
   }
 
-  // Sale completed view
   if (completedSaleId) {
     return (
       <div className="h-full flex items-center justify-center p-8 print:p-4">
         <Card className="max-w-lg w-full">
           <CardContent className="pt-8">
-            {/* Success Icon */}
             <div className="text-center mb-6">
               <div className="h-20 w-20 mx-auto rounded-full bg-success/10 flex items-center justify-center mb-4 animate-pulse-success">
                 <CheckCircle2 className="h-12 w-12 text-success" />
@@ -86,7 +76,6 @@ export function CheckoutScreen() {
               </p>
             </div>
 
-            {/* Receipt Details */}
             <div className="bg-muted/30 rounded-lg p-4 space-y-3 print:bg-white print:border">
               <div className="text-center border-b border-border pb-3">
                 <h3 className="font-bold text-lg">PowerSync POS Demo</h3>
@@ -120,7 +109,6 @@ export function CheckoutScreen() {
               </div>
             </div>
 
-            {/* Actions */}
             <div className="mt-6 space-y-3 print:hidden">
               <Button
                 variant="outline"
@@ -145,10 +133,8 @@ export function CheckoutScreen() {
     );
   }
 
-  // Checkout view
   return (
     <div className="h-full flex">
-      {/* Left side - Order Summary */}
       <div className="flex-1 p-8 overflow-auto">
         <div className="max-w-xl mx-auto">
           <Button
@@ -168,7 +154,6 @@ export function CheckoutScreen() {
         </div>
       </div>
 
-      {/* Right side - Payment */}
       <div className="w-96 border-l border-border p-6 flex flex-col">
         <h2 className="text-xl font-bold mb-6">Payment</h2>
 
@@ -204,7 +189,6 @@ export function CheckoutScreen() {
           </p>
         </div>
 
-        {/* Cashier Info */}
         <div className="mt-auto pt-6 border-t border-border text-sm text-muted-foreground">
           <p>Cashier: {cashier?.name}</p>
         </div>
@@ -212,4 +196,3 @@ export function CheckoutScreen() {
     </div>
   );
 }
-

@@ -9,14 +9,9 @@ interface CartItemProps {
   onRemove: (productId: string) => void;
 }
 
-/**
- * Cart Item component
- * Displays individual cart item with quantity controls
- */
 export function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
   return (
     <div className="flex gap-3 p-3 bg-background rounded-lg border border-border group">
-      {/* Product Image */}
       <div className="h-16 w-16 rounded-md overflow-hidden bg-muted shrink-0">
         {item.product.image_url ? (
           <img
@@ -31,7 +26,6 @@ export function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
         )}
       </div>
 
-      {/* Product Details */}
       <div className="flex-1 min-w-0">
         <h4 className="font-medium text-sm truncate">
           {item.product.name ?? "Unnamed"}
@@ -40,7 +34,6 @@ export function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
           {formatCurrency(item.unitPrice)} each
         </p>
 
-        {/* Quantity Controls */}
         <div className="flex items-center gap-2 mt-2">
           <Button
             variant="outline"
@@ -62,7 +55,6 @@ export function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
             <Plus className="h-3 w-3" />
           </Button>
 
-          {/* Remove Button */}
           <Button
             variant="ghost"
             size="icon"
@@ -74,7 +66,6 @@ export function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
         </div>
       </div>
 
-      {/* Subtotal */}
       <div className="text-right shrink-0">
         <p className="pos-price text-sm text-primary">
           {formatCurrency(item.subtotal)}
@@ -83,4 +74,3 @@ export function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
     </div>
   );
 }
-

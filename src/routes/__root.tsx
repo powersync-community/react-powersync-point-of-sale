@@ -3,16 +3,11 @@ import { useStatus } from "@powersync/react";
 import { Wifi, WifiOff, Cloud, CloudOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/**
- * Root route component
- * Provides layout wrapper and connectivity status bar
- */
 function RootComponent() {
   const status = useStatus();
 
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ background: 'rgb(0, 19, 31)' }}>
-      {/* Connectivity Status Bar */}
       <div className="h-8 bg-card border-b border-border flex items-center justify-between px-4 text-xs">
         <div className="flex items-center gap-4">
           <span className="text-muted-foreground font-medium">
@@ -21,7 +16,6 @@ function RootComponent() {
         </div>
         
         <div className="flex items-center gap-4">
-          {/* Sync Status */}
           <div className="flex items-center gap-1.5">
             {status?.dataFlowStatus?.downloading ? (
               <Cloud className="h-3.5 w-3.5 text-primary animate-pulse" />
@@ -43,7 +37,6 @@ function RootComponent() {
             </span>
           </div>
 
-          {/* Connection Status */}
           <div className="flex items-center gap-1.5">
             {status?.connected ? (
               <Wifi className="h-3.5 w-3.5 text-success" />
@@ -61,7 +54,6 @@ function RootComponent() {
         </div>
       </div>
 
-      {/* Main Content */}
       <main className="flex-1 overflow-hidden">
         <Outlet />
       </main>
@@ -72,4 +64,3 @@ function RootComponent() {
 export const Route = createRootRoute({
   component: RootComponent,
 });
-

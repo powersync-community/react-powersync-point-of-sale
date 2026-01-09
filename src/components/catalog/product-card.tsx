@@ -9,10 +9,6 @@ interface ProductCardProps {
   onAddToCart: (product: Product) => void;
 }
 
-/**
- * Product Card component
- * Displays product info with quick add-to-cart action
- */
 export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const isLowStock = product.stock_quantity <= 5;
   const isOutOfStock = product.stock_quantity <= 0;
@@ -22,7 +18,6 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
       className="pos-card pos-grid-item group relative overflow-hidden"
       onClick={() => !isOutOfStock && onAddToCart(product)}
     >
-      {/* Image */}
       <div className="aspect-square relative mb-3 rounded-lg overflow-hidden bg-muted">
         {product.image_url ? (
           <img
@@ -37,7 +32,6 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           </div>
         )}
 
-        {/* Quick Add Button */}
         {!isOutOfStock && (
           <Button
             size="icon"
@@ -51,7 +45,6 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           </Button>
         )}
 
-        {/* Stock Badge */}
         {isOutOfStock ? (
           <Badge
             variant="destructive"
@@ -69,7 +62,6 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
         ) : null}
       </div>
 
-      {/* Product Info */}
       <div className="space-y-1">
         <h3 className="font-medium text-sm line-clamp-2 leading-tight">
           {product.name ?? "Unnamed Product"}
@@ -84,7 +76,6 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
         </p>
       </div>
 
-      {/* Overlay for out of stock */}
       {isOutOfStock && (
         <div className="absolute inset-0 bg-background/60 flex items-center justify-center cursor-not-allowed">
           <span className="text-muted-foreground font-medium">Unavailable</span>
@@ -93,4 +84,3 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
     </div>
   );
 }
-

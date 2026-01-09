@@ -8,16 +8,11 @@ import { cn } from "@/lib/utils";
 
 const PIN_LENGTH = 4;
 
-/**
- * PIN Login component
- * Displays numeric keypad for cashier authentication
- */
 export function PinLogin() {
   const navigate = useNavigate();
   const { loginWithPin, isAuthenticating, error, clearError } = useAuth();
   const [pin, setPin] = useState("");
 
-  /** Handle digit press */
   const handleDigit = useCallback(
     (digit: string) => {
       if (pin.length < PIN_LENGTH) {
@@ -28,19 +23,16 @@ export function PinLogin() {
     [pin.length, clearError]
   );
 
-  /** Handle backspace */
   const handleBackspace = useCallback(() => {
     setPin((prev) => prev.slice(0, -1));
     clearError();
   }, [clearError]);
 
-  /** Handle clear */
   const handleClear = useCallback(() => {
     setPin("");
     clearError();
   }, [clearError]);
 
-  /** Handle login attempt */
   const handleLogin = useCallback(async () => {
     if (pin.length !== PIN_LENGTH) return;
 
@@ -52,7 +44,6 @@ export function PinLogin() {
     }
   }, [pin, loginWithPin, navigate]);
 
-  /** Keypad digits */
   const digits = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "clear", "0", "back"];
 
   return (
@@ -68,7 +59,6 @@ export function PinLogin() {
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* PIN Display */}
         <div className="flex justify-center gap-3">
           {Array.from({ length: PIN_LENGTH }).map((_, i) => (
             <div
@@ -87,14 +77,12 @@ export function PinLogin() {
           ))}
         </div>
 
-        {/* Error Message */}
         {error && (
           <div className="text-center text-destructive text-sm animate-fade-in">
             {error}
           </div>
         )}
 
-        {/* Keypad */}
         <div className="grid grid-cols-3 gap-3">
           {digits.map((digit) => {
             if (digit === "clear") {
@@ -142,7 +130,6 @@ export function PinLogin() {
           })}
         </div>
 
-        {/* Login Button */}
         <Button
           size="xl"
           className="w-full h-14 text-lg font-semibold"
@@ -162,7 +149,6 @@ export function PinLogin() {
           )}
         </Button>
 
-        {/* Demo Info */}
         <div className="text-center text-xs text-muted-foreground border-t border-border pt-4">
           <p>Demo PINs: 1234, 5678, 9012</p>
         </div>
@@ -170,4 +156,3 @@ export function PinLogin() {
     </Card>
   );
 }
-

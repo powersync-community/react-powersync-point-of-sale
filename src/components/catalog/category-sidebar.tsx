@@ -10,32 +10,24 @@ interface CategorySidebarProps {
   onSelectCategory: (categoryId: string | null) => void;
 }
 
-/**
- * Category Sidebar component
- * Displays list of product categories for filtering
- */
 export function CategorySidebar({
   selectedCategory,
   onSelectCategory,
 }: CategorySidebarProps) {
-  // Fetch categories using TanStack DB liveQuery
   const { data: categories = [], isLoading } = useLiveQuery((q) =>
     q.from({ c: categoriesCollection }).orderBy(({ c }) => c.sort_order, "asc")
   );
 
   return (
     <div className="h-full flex flex-col border-r border-border">
-      {/* Header */}
       <div className="p-4 border-b border-border">
         <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
           Categories
         </h2>
       </div>
 
-      {/* Category List */}
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-1">
-          {/* All Products */}
           <Button
             variant={selectedCategory === null ? "secondary" : "ghost"}
             className={cn(
@@ -57,7 +49,6 @@ export function CategorySidebar({
             <span className="font-medium">All Products</span>
           </Button>
 
-          {/* Category Buttons */}
           {isLoading ? (
             <div className="space-y-2 p-2">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -109,4 +100,3 @@ export function CategorySidebar({
     </div>
   );
 }
-

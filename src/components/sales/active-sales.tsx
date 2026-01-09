@@ -14,12 +14,7 @@ import {
 } from "@/collections";
 import { formatCurrency } from "@/lib/utils";
 
-/**
- * Active Sales component
- * Displays real-time grid view of in-progress sales across all connected clients
- */
 export function ActiveSales() {
-  // Fetch only draft (active) sales using TanStack DB liveQuery - real-time updates
   const { data: rawActiveSales = [], isLoading: salesLoading } = useLiveQuery(
     (q) =>
       q
@@ -28,23 +23,19 @@ export function ActiveSales() {
         .orderBy(({ sale }) => sale.created_at, "desc")
   );
 
-  // Fetch all cashiers for lookup
   const { data: cashiers = [] } = useLiveQuery((q) =>
     q.from({ c: cashiersCollection })
   );
 
-  // Fetch all sale items to count products per sale
   const { data: allSaleItems = [] } = useLiveQuery((q) =>
     q.from({ si: saleItemsCollection })
   );
 
-  // Create lookup maps
   const cashierMap = useMemo(
     () => new Map(cashiers.map((c) => [c.id, c])),
     [cashiers]
   );
 
-  // Count items per sale
   const itemCountMap = useMemo(() => {
     const counts = new Map<string, number>();
     allSaleItems.forEach((item) => {
@@ -56,7 +47,6 @@ export function ActiveSales() {
     return counts;
   }, [allSaleItems]);
 
-  // Merge sales with cashier info and item counts
   const activeSales = useMemo(() => {
     return rawActiveSales.map((sale) => {
       const cashier = sale.cashier_id ? cashierMap.get(sale.cashier_id) : null;
@@ -69,7 +59,6 @@ export function ActiveSales() {
     });
   }, [rawActiveSales, cashierMap, itemCountMap]);
 
-  // Calculate stats
   const totalActiveSales = activeSales.length;
   const totalPendingValue = activeSales.reduce(
     (sum, s) => sum + s.total_amount,
@@ -78,7 +67,6 @@ export function ActiveSales() {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center gap-3 mb-4">
           <Link to="/">
@@ -100,7 +88,6 @@ export function ActiveSales() {
           </div>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 gap-3 max-w-md">
           <div className="bg-accent/10 rounded-lg p-3 border border-accent/20">
             <p className="text-xs text-muted-foreground flex items-center gap-1">
@@ -121,7 +108,6 @@ export function ActiveSales() {
         </div>
       </div>
 
-      {/* Sales Grid */}
       <div className="flex-1 overflow-auto p-4">
         {salesLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -148,7 +134,6 @@ export function ActiveSales() {
                 className="border-accent/20 hover:border-accent/40 transition-colors"
               >
                 <CardContent className="p-4">
-                  {/* Header with reference and status */}
                   <div className="flex items-center justify-between mb-3">
                     <span className="font-mono text-xs text-muted-foreground">
                       #{sale.id.slice(0, 8)}
@@ -162,7 +147,6 @@ export function ActiveSales() {
                     </Badge>
                   </div>
 
-                  {/* Cashier */}
                   <div className="flex items-center gap-2 mb-3">
                     <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
                       <User className="h-3 w-3 text-primary" />
@@ -172,7 +156,6 @@ export function ActiveSales() {
                     </span>
                   </div>
 
-                  {/* Products count and Total */}
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">
                       {sale.item_count} {sale.item_count === 1 ? "item" : "items"}
@@ -188,7 +171,6 @@ export function ActiveSales() {
         )}
       </div>
 
-      {/* Real-time indicator */}
       <div className="p-3 border-t border-border bg-muted/30">
         <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <span className="relative flex h-2 w-2">

@@ -24,7 +24,6 @@ import {
 } from "@/collections";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
-/** Extended sale item with product info */
 interface SaleItemWithProduct {
   id: string;
   sale_id: string | null | undefined;
@@ -37,21 +36,15 @@ interface SaleItemWithProduct {
   product_image: string | null;
 }
 
-/**
- * Sales History component
- * Displays list of completed sales with details
- */
 export function SalesHistory() {
   const [selectedSale, setSelectedSale] = useState<string | null>(null);
 
-  // Fetch all sales using TanStack DB liveQuery
   const { data: sales = [], isLoading: salesLoading } = useLiveQuery((q) =>
     q
       .from({ sale: salesCollection })
       .orderBy(({ sale }) => sale.created_at, "desc")
   );
 
-  // Fetch items for selected sale
   const { data: rawSaleItems = [] } = useLiveQuery(
     (q) =>
       q
@@ -60,12 +53,10 @@ export function SalesHistory() {
     [selectedSale]
   );
 
-  // Fetch all products for lookup
   const { data: products = [] } = useLiveQuery((q) =>
     q.from({ p: productsCollection })
   );
 
-  // Merge sale items with product info
   const saleItems = useMemo<SaleItemWithProduct[]>(() => {
     const productMap = new Map(products.map((p) => [p.id, p]));
     return rawSaleItems.map((item) => {
@@ -84,13 +75,11 @@ export function SalesHistory() {
     });
   }, [rawSaleItems, products]);
 
-  // Get selected sale details
   const selectedSaleData = useMemo(
     () => sales.find((s) => s.id === selectedSale),
     [sales, selectedSale]
   );
 
-  /** Get status badge config */
   const getStatusBadge = (status: string | null) => {
     switch (status) {
       case "completed":
@@ -110,7 +99,6 @@ export function SalesHistory() {
     }
   };
 
-  // Calculate totals
   const totalSales = sales.filter((s) => s.status === "completed").length;
   const totalRevenue = sales
     .filter((s) => s.status === "completed")
@@ -118,9 +106,7 @@ export function SalesHistory() {
 
   return (
     <div className="h-full flex">
-      {/* Sales List */}
       <div className="w-[400px] border-r border-border flex flex-col">
-        {/* Header */}
         <div className="p-4 border-b border-border">
           <div className="flex items-center gap-3 mb-4">
             <Link to="/">
@@ -136,7 +122,6 @@ export function SalesHistory() {
             </div>
           </div>
 
-          {/* Stats */}
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-muted/30 rounded-lg p-3">
               <p className="text-xs text-muted-foreground">Total Sales</p>
@@ -151,7 +136,6 @@ export function SalesHistory() {
           </div>
         </div>
 
-        {/* Sales List */}
         <ScrollArea className="flex-1">
           <div className="p-2">
             {salesLoading ? (
@@ -213,7 +197,6 @@ export function SalesHistory() {
         </ScrollArea>
       </div>
 
-      {/* Sale Details */}
       <div className="flex-1 p-6 overflow-auto">
         {selectedSale && selectedSaleData ? (
           <Card className="max-w-2xl mx-auto">
@@ -231,7 +214,6 @@ export function SalesHistory() {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Sale Info */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-muted-foreground">Date</p>
@@ -253,7 +235,6 @@ export function SalesHistory() {
 
               <Separator />
 
-              {/* Items */}
               <div>
                 <h4 className="font-semibold mb-3">Items</h4>
                 <div className="space-y-2">
@@ -293,7 +274,6 @@ export function SalesHistory() {
 
               <Separator />
 
-              {/* Total */}
               <div className="flex justify-between items-center">
                 <span className="text-lg font-semibold">Total</span>
                 <span className="pos-price text-2xl font-bold text-primary">
@@ -314,4 +294,3 @@ export function SalesHistory() {
     </div>
   );
 }
-
