@@ -6,6 +6,7 @@ import {
   History,
   LogOut,
   User,
+  Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -116,6 +117,13 @@ export function CartSidebar() {
           <Button variant="outline" size="lg" className="w-full">
             <History className="mr-2 h-4 w-4" />
             Sales History
+          </Button>
+        </Link>
+
+        <Link to="/active-sales" className="block">
+          <Button variant="outline" size="lg" className="w-full">
+            <Activity className="mr-2 h-4 w-4" />
+            Active Sales
           </Button>
         </Link>
       </div>

@@ -27,12 +27,12 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 /** Extended sale item with product info */
 interface SaleItemWithProduct {
   id: string;
-  sale_id: string | null;
-  product_id: string | null;
-  quantity: number;
-  unit_price: number;
-  subtotal: number;
-  created_at: Date | null;
+  sale_id: string | null | undefined;
+  product_id: string | null | undefined;
+  quantity: number | null | undefined;
+  unit_price: number | null | undefined;
+  subtotal: number | null | undefined;
+  created_at: Date | string | null | undefined;
   product_name: string | null;
   product_image: string | null;
 }
@@ -172,7 +172,7 @@ export function SalesHistory() {
             ) : (
               <div className="space-y-1">
                 {sales.map((sale) => {
-                  const status = getStatusBadge(sale.status);
+                  const status = getStatusBadge(sale.status ?? null);
                   const StatusIcon = status.icon;
 
                   return (
@@ -183,7 +183,7 @@ export function SalesHistory() {
                           ? "bg-primary/10 border border-primary/30"
                           : "hover:bg-muted/50"
                       }`}
-                      onClick={() => setSelectedSale(sale.id)}
+                      onClick={() => setSelectedSale(sale.id ?? null)}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-mono text-xs text-muted-foreground">
@@ -225,8 +225,8 @@ export function SalesHistory() {
                     #{selectedSale.slice(0, 8)}
                   </p>
                 </div>
-                <Badge variant={getStatusBadge(selectedSaleData.status).variant}>
-                  {getStatusBadge(selectedSaleData.status).label}
+                <Badge variant={getStatusBadge(selectedSaleData.status ?? null).variant}>
+                  {getStatusBadge(selectedSaleData.status ?? null).label}
                 </Badge>
               </div>
             </CardHeader>

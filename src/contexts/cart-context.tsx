@@ -1,18 +1,22 @@
 import {
   createContext,
   useContext,
-  useState,
   useCallback,
   useMemo,
+  useState,
   type ReactNode,
 } from "react";
+import { useLiveQuery } from "@tanstack/react-db";
+import { eq, and } from "@tanstack/db";
 import { powerSync } from "@/powersync/System";
-import {
-  SALES_TABLE,
-  SALE_ITEMS_TABLE,
-} from "@/powersync/AppSchema";
+import { SALES_TABLE, SALE_ITEMS_TABLE } from "@/powersync/AppSchema";
 import { generateId } from "@/lib/utils";
 import type { Product } from "@/collections/products";
+import {
+  salesCollection,
+  saleItemsCollection,
+  productsCollection,
+} from "@/collections";
 import { useAuth } from "./auth-context";
 
 /** Cart item with product info and quantity */
@@ -46,6 +50,8 @@ interface CartContextType {
   completeSale: () => Promise<string | null>;
   /** Whether cart is processing */
   isProcessing: boolean;
+  /** Whether cart is loading from DB */
+  isLoading: boolean;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -68,13 +74,78 @@ interface CartProviderProps {
 
 /**
  * Cart Provider component
- * Manages shopping cart state and persists sales to PowerSync
+ * Manages shopping cart state and persists sales to PowerSync local database
+ *
+ * Each client can only have ONE draft sale at a time.
+ * Uses TanStack DB live queries for reactive updates.
  */
 export function CartProvider({ children }: CartProviderProps) {
   const { cashier } = useAuth();
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [saleId, setSaleId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Live query for the cashier's single draft sale
+  // Each client should only have ONE draft sale at a time
+  const { data: draftSales = [], isLoading: salesLoading } = useLiveQuery(
+    (q) =>
+      q
+        .from({ sale: salesCollection })
+        .where(({ sale }) =>
+          and(
+            eq(sale.cashier_id, cashier?.id ?? ""),
+            eq(sale.status, "draft")
+          )
+        ),
+    [cashier?.id]
+  );
+
+  // Get the current draft sale - should be exactly 0 or 1
+  const draftSale = draftSales.length > 0 ? draftSales[0] : null;
+  const currentSaleId = draftSale?.id ?? null;
+
+  // Live query for sale items - only when we have a draft sale
+  const { data: rawSaleItems = [], isLoading: itemsLoading } = useLiveQuery(
+    (q) =>
+      q
+        .from({ si: saleItemsCollection })
+        .where(({ si }) => eq(si.sale_id, currentSaleId ?? ""))
+        .orderBy(({ si }) => si.created_at, "asc"),
+    [currentSaleId]
+  );
+
+  // Live query for all products (for joining with sale items)
+  const { data: products = [] } = useLiveQuery((q) =>
+    q.from({ p: productsCollection })
+  );
+
+  // Create a product lookup map
+  const productMap = useMemo(
+    () => new Map(products.map((p) => [p.id, p])),
+    [products]
+  );
+
+  // Transform sale items to CartItem format with product info
+  const items: CartItem[] = useMemo(() => {
+    if (!currentSaleId) return [];
+
+    return rawSaleItems
+      .map((item) => {
+        const product = item.product_id
+          ? productMap.get(item.product_id)
+          : null;
+        if (!product) return null;
+
+        return {
+          id: item.id,
+          product: product as Product,
+          quantity: item.quantity ?? 0,
+          unitPrice: item.unit_price ?? 0,
+          subtotal: item.subtotal ?? 0,
+        };
+      })
+      .filter((item): item is CartItem => item !== null);
+  }, [rawSaleItems, productMap, currentSaleId]);
+
+  const isLoading = salesLoading || itemsLoading;
 
   /** Calculate total item count */
   const itemCount = useMemo(
@@ -89,135 +160,249 @@ export function CartProvider({ children }: CartProviderProps) {
   );
 
   /**
-   * Add product to cart or increment quantity
+   * Get or create the single draft sale for this cashier
+   * Enforces the one-draft-per-client rule
    */
-  const addItem = useCallback((product: Product) => {
-    setItems((current) => {
-      const existingIndex = current.findIndex(
-        (item) => item.product.id === product.id
-      );
-
-      if (existingIndex >= 0) {
-        // Increment existing item
-        const updated = [...current];
-        const existing = updated[existingIndex];
-        const newQuantity = existing.quantity + 1;
-        updated[existingIndex] = {
-          ...existing,
-          quantity: newQuantity,
-          subtotal: newQuantity * existing.unitPrice,
-        };
-        return updated;
-      }
-
-      // Add new item
-      return [
-        ...current,
-        {
-          id: generateId(),
-          product,
-          quantity: 1,
-          unitPrice: product.price,
-          subtotal: product.price,
-        },
-      ];
-    });
-  }, []);
-
-  /**
-   * Update item quantity
-   */
-  const updateQuantity = useCallback((productId: string, quantity: number) => {
-    if (quantity <= 0) {
-      setItems((current) =>
-        current.filter((item) => item.product.id !== productId)
-      );
-      return;
+  const getOrCreateDraftSale = useCallback(async (): Promise<string> => {
+    if (!cashier) {
+      throw new Error("No cashier logged in");
     }
 
-    setItems((current) =>
-      current.map((item) =>
-        item.product.id === productId
-          ? {
-              ...item,
-              quantity,
-              subtotal: quantity * item.unitPrice,
-            }
-          : item
+    // If we already have a draft sale from the live query, use it
+    if (currentSaleId) {
+      return currentSaleId;
+    }
+
+    // Double-check database (in case live query hasn't updated yet)
+    const existingDraft = await powerSync
+      .get<{ id: string }>(
+        `SELECT id FROM ${SALES_TABLE} WHERE cashier_id = ? AND status = 'draft' LIMIT 1`,
+        [cashier.id]
       )
+      .catch(() => null);
+
+    if (existingDraft) {
+      return existingDraft.id;
+    }
+
+    // Create the single draft sale for this client
+    const newSaleId = generateId();
+    const now = new Date().toISOString();
+
+    await powerSync.execute(
+      `INSERT INTO ${SALES_TABLE} (id, cashier_id, total_amount, status, created_at) 
+       VALUES (?, ?, ?, 'draft', ?)`,
+      [newSaleId, cashier.id, 0, now]
     );
-  }, []);
+
+    return newSaleId;
+  }, [cashier, currentSaleId]);
 
   /**
-   * Remove item from cart
+   * Update the draft sale's total amount
    */
-  const removeItem = useCallback((productId: string) => {
-    setItems((current) =>
-      current.filter((item) => item.product.id !== productId)
-    );
-  }, []);
+  const updateSaleTotal = useCallback(
+    async (saleId: string, newTotal: number) => {
+      await powerSync.execute(
+        `UPDATE ${SALES_TABLE} SET total_amount = ? WHERE id = ?`,
+        [newTotal, saleId]
+      );
+    },
+    []
+  );
 
   /**
-   * Clear all items from cart
+   * Add product to cart - persists to local database
    */
-  const clearCart = useCallback(() => {
-    setItems([]);
-    setSaleId(null);
-  }, []);
+  const addItem = useCallback(
+    async (product: Product) => {
+      if (!cashier) return;
+
+      try {
+        const saleId = await getOrCreateDraftSale();
+        console.log("saleId", saleId);
+
+        // Check if product already exists in cart
+        const existingItem = await powerSync
+          .get<{ id: string; quantity: number; unit_price: number }>(
+            `SELECT id, quantity, unit_price FROM ${SALE_ITEMS_TABLE} WHERE sale_id = ? AND product_id = ?`,
+            [saleId, product.id]
+          )
+          .catch(() => null);
+
+        if (existingItem) {
+          // Update existing item quantity using UPDATE (not DELETE+INSERT)
+          const newQuantity = existingItem.quantity + 1;
+          const newSubtotal = newQuantity * existingItem.unit_price;
+
+          await powerSync.execute(
+            `UPDATE ${SALE_ITEMS_TABLE} SET quantity = ?, subtotal = ? WHERE id = ?`,
+            [newQuantity, newSubtotal, existingItem.id]
+          );
+
+          // Update sale total
+          const newTotal =
+            total - existingItem.quantity * existingItem.unit_price + newSubtotal;
+          await updateSaleTotal(saleId, newTotal);
+        } else {
+          // Add new item
+          const itemId = generateId();
+          const now = new Date().toISOString();
+
+          await powerSync.execute(
+            `INSERT INTO ${SALE_ITEMS_TABLE} (id, sale_id, product_id, quantity, unit_price, subtotal, created_at) 
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [itemId, saleId, product.id, 1, product.price, product.price, now]
+          );
+
+          // Update sale total
+          const newTotal = total + product.price;
+          await updateSaleTotal(saleId, newTotal);
+        }
+      } catch (err) {
+        console.error("Error adding item to cart:", err);
+      }
+    },
+    [cashier, getOrCreateDraftSale, total, updateSaleTotal]
+  );
 
   /**
-   * Complete the sale - persist to database
+   * Update item quantity - persists to local database
+   */
+  const updateQuantity = useCallback(
+    async (productId: string, quantity: number) => {
+      if (!currentSaleId) return;
+
+      try {
+        // Get existing item
+        const existingItem = await powerSync
+          .get<{ id: string; unit_price: number; subtotal: number }>(
+            `SELECT id, unit_price, subtotal FROM ${SALE_ITEMS_TABLE} WHERE sale_id = ? AND product_id = ?`,
+            [currentSaleId, productId]
+          )
+          .catch(() => null);
+
+        if (!existingItem) return;
+
+        const oldSubtotal = existingItem.subtotal;
+
+        if (quantity <= 0) {
+          // Remove item
+          await powerSync.execute(
+            `DELETE FROM ${SALE_ITEMS_TABLE} WHERE id = ?`,
+            [existingItem.id]
+          );
+
+          // Update sale total
+          const newTotal = Math.max(0, total - oldSubtotal);
+          await updateSaleTotal(currentSaleId, newTotal);
+        } else {
+          // Update quantity using UPDATE (not DELETE+INSERT)
+          const newSubtotal = quantity * existingItem.unit_price;
+
+          await powerSync.execute(
+            `UPDATE ${SALE_ITEMS_TABLE} SET quantity = ?, subtotal = ? WHERE id = ?`,
+            [quantity, newSubtotal, existingItem.id]
+          );
+
+          // Update sale total
+          const newTotal = total - oldSubtotal + newSubtotal;
+          await updateSaleTotal(currentSaleId, newTotal);
+        }
+      } catch (err) {
+        console.error("Error updating quantity:", err);
+      }
+    },
+    [currentSaleId, total, updateSaleTotal]
+  );
+
+  /**
+   * Remove item from cart - persists to local database
+   */
+  const removeItem = useCallback(
+    async (productId: string) => {
+      if (!currentSaleId) return;
+
+      try {
+        // Get item to remove
+        const existingItem = await powerSync
+          .get<{ id: string; subtotal: number }>(
+            `SELECT id, subtotal FROM ${SALE_ITEMS_TABLE} WHERE sale_id = ? AND product_id = ?`,
+            [currentSaleId, productId]
+          )
+          .catch(() => null);
+
+        if (!existingItem) return;
+
+        await powerSync.execute(
+          `DELETE FROM ${SALE_ITEMS_TABLE} WHERE id = ?`,
+          [existingItem.id]
+        );
+
+        // Update sale total
+        const newTotal = Math.max(0, total - existingItem.subtotal);
+        await updateSaleTotal(currentSaleId, newTotal);
+      } catch (err) {
+        console.error("Error removing item:", err);
+      }
+    },
+    [currentSaleId, total, updateSaleTotal]
+  );
+
+  /**
+   * Clear all items from cart - deletes draft sale
+   */
+  const clearCart = useCallback(async () => {
+    if (!currentSaleId) return;
+
+    try {
+      await powerSync.writeTransaction(async (tx) => {
+        // Delete all items
+        await tx.execute(`DELETE FROM ${SALE_ITEMS_TABLE} WHERE sale_id = ?`, [
+          currentSaleId,
+        ]);
+        // Delete the draft sale
+        await tx.execute(`DELETE FROM ${SALES_TABLE} WHERE id = ?`, [
+          currentSaleId,
+        ]);
+      });
+    } catch (err) {
+      console.error("Error clearing cart:", err);
+    }
+  }, [currentSaleId]);
+
+  /**
+   * Complete the sale - update status from draft to completed
+   * After completion, the client will have no draft sale until next addItem
    */
   const completeSale = useCallback(async (): Promise<string | null> => {
-    if (!cashier || items.length === 0) {
+    if (!cashier || !currentSaleId || items.length === 0) {
       return null;
     }
 
     setIsProcessing(true);
 
     try {
-      const newSaleId = saleId || generateId();
       const now = new Date().toISOString();
 
-      // Use a transaction to ensure atomic write
-      await powerSync.writeTransaction(async (tx) => {
-        // Create or update the sale record
-        await tx.execute(
-          `INSERT OR REPLACE INTO ${SALES_TABLE} (id, cashier_id, total_amount, status, created_at, completed_at) 
-           VALUES (?, ?, ?, ?, ?, ?)`,
-          [newSaleId, cashier.id, total, "completed", now, now]
-        );
+      // Update the sale status to completed
+      await powerSync.execute(
+        `UPDATE ${SALES_TABLE} 
+         SET status = 'completed', total_amount = ?, completed_at = ? 
+         WHERE id = ?`,
+        [total, now, currentSaleId]
+      );
 
-        // Insert all sale items
-        for (const item of items) {
-          await tx.execute(
-            `INSERT INTO ${SALE_ITEMS_TABLE} (id, sale_id, product_id, quantity, unit_price, subtotal, created_at) 
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [
-              generateId(),
-              newSaleId,
-              item.product.id,
-              item.quantity,
-              item.unitPrice,
-              item.subtotal,
-              now,
-            ]
-          );
-        }
-      });
-
-      // Clear cart after successful sale
-      setItems([]);
-      setSaleId(null);
+      const completedSaleId = currentSaleId;
       setIsProcessing(false);
 
-      return newSaleId;
+      return completedSaleId;
     } catch (err) {
       console.error("Error completing sale:", err);
       setIsProcessing(false);
       return null;
     }
-  }, [cashier, items, saleId, total]);
+  }, [cashier, currentSaleId, items.length, total]);
 
   return (
     <CartContext.Provider
@@ -225,17 +410,17 @@ export function CartProvider({ children }: CartProviderProps) {
         items,
         itemCount,
         total,
-        saleId,
+        saleId: currentSaleId,
         addItem,
         updateQuantity,
         removeItem,
         clearCart,
         completeSale,
         isProcessing,
+        isLoading,
       }}
     >
       {children}
     </CartContext.Provider>
   );
 }
-

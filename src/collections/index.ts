@@ -8,6 +8,6 @@
 export { cashiersCollection, type Cashier } from './cashiers';
 export { categoriesCollection, type Category } from './categories';
 export { productsCollection, type Product } from './products';
-export { salesCollection, type Sale } from './sales';
+export { salesCollection, SALE_STATUS, type Sale, type SaleStatus } from './sales';
 export { saleItemsCollection, type SaleItem } from './sale-items';
 

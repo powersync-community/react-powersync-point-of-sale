@@ -16,6 +16,7 @@ import { Route as rootRoute } from './routes/__root'
 import { Route as SalesImport } from './routes/sales'
 import { Route as LoginImport } from './routes/login'
 import { Route as CheckoutImport } from './routes/checkout'
+import { Route as ActiveSalesImport } from './routes/active-sales'
 import { Route as IndexImport } from './routes/index'
 
 // Create Virtual Routers
@@ -40,6 +41,12 @@ const CheckoutRoute = CheckoutImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const ActiveSalesRoute = ActiveSalesImport.update({
+  id: '/active-sales',
+  path: '/active-sales',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
@@ -55,6 +62,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/active-sales': {
+      id: '/active-sales'
+      path: '/active-sales'
+      fullPath: '/active-sales'
+      preLoaderRoute: typeof ActiveSalesImport
       parentRoute: typeof rootRoute
     }
     '/checkout': {
@@ -85,6 +99,7 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/active-sales': typeof ActiveSalesRoute
   '/checkout': typeof CheckoutRoute
   '/login': typeof LoginRoute
   '/sales': typeof SalesRoute
@@ -92,6 +107,7 @@ export interface FileRoutesByFullPath {
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/active-sales': typeof ActiveSalesRoute
   '/checkout': typeof CheckoutRoute
   '/login': typeof LoginRoute
   '/sales': typeof SalesRoute
@@ -100,6 +116,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/active-sales': typeof ActiveSalesRoute
   '/checkout': typeof CheckoutRoute
   '/login': typeof LoginRoute
   '/sales': typeof SalesRoute
@@ -107,15 +124,16 @@ export interface FileRoutesById {
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/checkout' | '/login' | '/sales'
+  fullPaths: '/' | '/active-sales' | '/checkout' | '/login' | '/sales'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/checkout' | '/login' | '/sales'
-  id: '__root__' | '/' | '/checkout' | '/login' | '/sales'
+  to: '/' | '/active-sales' | '/checkout' | '/login' | '/sales'
+  id: '__root__' | '/' | '/active-sales' | '/checkout' | '/login' | '/sales'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ActiveSalesRoute: typeof ActiveSalesRoute
   CheckoutRoute: typeof CheckoutRoute
   LoginRoute: typeof LoginRoute
   SalesRoute: typeof SalesRoute
@@ -123,6 +141,7 @@ export interface RootRouteChildren {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ActiveSalesRoute: ActiveSalesRoute,
   CheckoutRoute: CheckoutRoute,
   LoginRoute: LoginRoute,
   SalesRoute: SalesRoute,

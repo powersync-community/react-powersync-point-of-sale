@@ -1,18 +1,10 @@
-# PowerSync Sync Rules for Point of Sale System
-# Defines which data is synced to client devices and how
-
 bucket_definitions:
-  # Global bucket - synced to ALL users
-  # Contains reference data needed by all cashiers
   global:
     data:
-      # All active cashiers (for PIN validation on login)
       - SELECT id, name, pin_hash, is_active, created_at FROM cashiers WHERE is_active = true
       
-      # All product categories
       - SELECT id, name, description, image_url, sort_order, created_at FROM categories
       
-      # All active products with their details
       - SELECT id, category_id, name, sku, price, image_url, stock_quantity, is_active, created_at 
         FROM products 
         WHERE is_active = true
@@ -20,6 +12,5 @@ bucket_definitions:
       - SELECT id, cashier_id, total_amount, status, created_at, completed_at 
         FROM sales
 
-      # Sale items for accessible sales
-      - SELECT si.id, si.sale_id, si.product_id, si.quantity, si.unit_price, si.subtotal, si.created_at
-        FROM sale_items si
+      - SELECT id, sale_id, product_id, quantity, unit_price, subtotal, created_at
+        FROM sale_items
