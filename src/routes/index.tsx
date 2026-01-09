@@ -15,10 +15,6 @@ import {
 import { useIsDesktop } from "@/hooks/use-media-query";
 import { formatCurrency } from "@/lib/utils";
 
-/**
- * Main POS route component
- * Shows product catalog and cart with responsive layout
- */
 function POSPage() {
   const navigate = useNavigate();
   const { cashier } = useAuth();
@@ -26,7 +22,6 @@ function POSPage() {
   const isDesktop = useIsDesktop();
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!cashier) {
       navigate({ to: "/login" });
@@ -39,19 +34,16 @@ function POSPage() {
 
   return (
     <div className="h-full flex relative">
-      {/* Product Catalog - Main Area */}
       <div className="flex-1 overflow-hidden min-w-0">
         <ProductCatalog />
       </div>
 
-      {/* Cart Sidebar - Desktop Only */}
       {isDesktop && (
         <div className="w-96 border-l border-border shrink-0">
           <CartSidebar />
         </div>
       )}
 
-      {/* Mobile/Tablet Cart Button */}
       {!isDesktop && (
         <Button
           size="lg"
@@ -71,7 +63,6 @@ function POSPage() {
         </Button>
       )}
 
-      {/* Mobile/Tablet Cart Sheet */}
       <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
         <SheetContent side="right" className="w-full sm:max-w-md p-0">
           <SheetTitle className="sr-only">Shopping Cart</SheetTitle>
@@ -88,4 +79,3 @@ function POSPage() {
 export const Route = createFileRoute("/")({
   component: POSPage,
 });
-

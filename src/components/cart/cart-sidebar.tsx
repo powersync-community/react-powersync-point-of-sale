@@ -17,14 +17,9 @@ import { useAuth } from "@/contexts/auth-context";
 import { formatCurrency } from "@/lib/utils";
 
 interface CartSidebarProps {
-  /** Callback when cart should close (used in mobile sheet) */
   onClose?: () => void;
 }
 
-/**
- * Cart Sidebar component
- * Displays current cart items with totals and actions
- */
 export function CartSidebar({ onClose }: CartSidebarProps) {
   const { cashier, logout } = useAuth();
   const { items, itemCount, total, updateQuantity, removeItem, clearCart } =
@@ -32,7 +27,6 @@ export function CartSidebar({ onClose }: CartSidebarProps) {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -58,7 +52,6 @@ export function CartSidebar({ onClose }: CartSidebarProps) {
         </div>
       </div>
 
-      {/* Cart Items */}
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-2">
           {items.length === 0 ? (
@@ -80,7 +73,6 @@ export function CartSidebar({ onClose }: CartSidebarProps) {
         </div>
       </ScrollArea>
 
-      {/* Totals */}
       {items.length > 0 && (
         <div className="p-4 border-t border-border space-y-3">
           <div className="flex justify-between text-sm">
@@ -105,7 +97,6 @@ export function CartSidebar({ onClose }: CartSidebarProps) {
         </div>
       )}
 
-      {/* Actions */}
       <div className="p-4 border-t border-border space-y-2">
         <Link to="/checkout" className="block" onClick={onClose}>
           <Button
@@ -133,7 +124,6 @@ export function CartSidebar({ onClose }: CartSidebarProps) {
         </Link>
       </div>
 
-      {/* Cashier Info */}
       <div className="p-4 border-t border-border bg-muted/30">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -159,4 +149,3 @@ export function CartSidebar({ onClose }: CartSidebarProps) {
     </div>
   );
 }
-

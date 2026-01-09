@@ -12,16 +12,10 @@ interface ProductGridProps {
   selectedCategory: string | null;
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  /** Callback to open categories sheet on mobile */
   onOpenCategories?: () => void;
-  /** Whether to show the category button (mobile only) */
   showCategoryButton?: boolean;
 }
 
-/**
- * Product Grid component
- * Displays filterable grid of products
- */
 export function ProductGrid({
   selectedCategory,
   searchQuery,
@@ -31,20 +25,16 @@ export function ProductGrid({
 }: ProductGridProps) {
   const { addItem } = useCart();
 
-  // Fetch products using TanStack DB liveQuery with filters
   const { data: products = [], isLoading } = useLiveQuery(
     (q) => {
-      // Start with base query for active products
       let query = q
         .from({ p: productsCollection })
         .where(({ p }) => eq(p.is_active, true));
 
-      // Apply category filter if selected
       if (selectedCategory) {
         query = query.where(({ p }) => eq(p.category_id, selectedCategory));
       }
 
-      // Apply search filter if provided
       if (searchQuery.trim()) {
         const searchTerm = `%${searchQuery.trim()}%`;
         query = query.where(({ p }) =>
@@ -59,10 +49,8 @@ export function ProductGrid({
 
   return (
     <div className="h-full flex flex-col">
-      {/* Search Bar */}
       <div className="p-4 border-b border-border">
         <div className="flex gap-2">
-          {/* Category Button - Mobile Only */}
           {showCategoryButton && (
             <Button
               variant="outline"
@@ -74,7 +62,6 @@ export function ProductGrid({
               <Menu className="h-5 w-5" />
             </Button>
           )}
-          {/* Search Input */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -87,7 +74,6 @@ export function ProductGrid({
         </div>
       </div>
 
-      {/* Products Grid */}
       <ScrollArea className="flex-1">
         <div className="p-4">
           {isLoading ? (
@@ -127,12 +113,9 @@ export function ProductGrid({
         </div>
       </ScrollArea>
 
-      {/* Product Count */}
       <div className="p-2 border-t border-border text-center text-xs text-muted-foreground">
-        {products.length} product
-        {products.length !== 1 && "s"} found
+        {products.length} product{products.length !== 1 && "s"} found
       </div>
     </div>
   );
 }
-
