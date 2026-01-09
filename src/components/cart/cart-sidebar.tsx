@@ -16,11 +16,16 @@ import { useCart } from "@/contexts/cart-context";
 import { useAuth } from "@/contexts/auth-context";
 import { formatCurrency } from "@/lib/utils";
 
+interface CartSidebarProps {
+  /** Callback when cart should close (used in mobile sheet) */
+  onClose?: () => void;
+}
+
 /**
  * Cart Sidebar component
  * Displays current cart items with totals and actions
  */
-export function CartSidebar() {
+export function CartSidebar({ onClose }: CartSidebarProps) {
   const { cashier, logout } = useAuth();
   const { items, itemCount, total, updateQuantity, removeItem, clearCart } =
     useCart();
@@ -102,7 +107,7 @@ export function CartSidebar() {
 
       {/* Actions */}
       <div className="p-4 border-t border-border space-y-2">
-        <Link to="/checkout" className="block">
+        <Link to="/checkout" className="block" onClick={onClose}>
           <Button
             size="lg"
             className="w-full h-14 text-lg font-semibold"
@@ -113,14 +118,14 @@ export function CartSidebar() {
           </Button>
         </Link>
 
-        <Link to="/sales" className="block">
+        <Link to="/sales" className="block" onClick={onClose}>
           <Button variant="outline" size="lg" className="w-full">
             <History className="mr-2 h-4 w-4" />
             Sales History
           </Button>
         </Link>
 
-        <Link to="/active-sales" className="block">
+        <Link to="/active-sales" className="block" onClick={onClose}>
           <Button variant="outline" size="lg" className="w-full">
             <Activity className="mr-2 h-4 w-4" />
             Active Sales

@@ -66,6 +66,59 @@
     0%, 100% { box-shadow: 0 0 0 0 hsl(142 76% 46% / 0.4); }
     50% { box-shadow: 0 0 0 8px hsl(142 76% 46% / 0); }
   }
+
+  /* Sheet/Drawer animations */
+  @keyframes slide-in-from-top {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(0); }
+  }
+  @keyframes slide-in-from-bottom {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  @keyframes slide-in-from-left {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+  @keyframes slide-in-from-right {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+  @keyframes slide-out-to-top {
+    from { transform: translateY(0); }
+    to { transform: translateY(-100%); }
+  }
+  @keyframes slide-out-to-bottom {
+    from { transform: translateY(0); }
+    to { transform: translateY(100%); }
+  }
+  @keyframes slide-out-to-left {
+    from { transform: translateX(0); }
+    to { transform: translateX(-100%); }
+  }
+  @keyframes slide-out-to-right {
+    from { transform: translateX(0); }
+    to { transform: translateX(100%); }
+  }
+  @keyframes fade-in-animation {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes fade-out-animation {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+
+  --animate-slide-in-from-top: slide-in-from-top 0.3s ease-out;
+  --animate-slide-in-from-bottom: slide-in-from-bottom 0.3s ease-out;
+  --animate-slide-in-from-left: slide-in-from-left 0.3s ease-out;
+  --animate-slide-in-from-right: slide-in-from-right 0.3s ease-out;
+  --animate-slide-out-to-top: slide-out-to-top 0.3s ease-out;
+  --animate-slide-out-to-bottom: slide-out-to-bottom 0.3s ease-out;
+  --animate-slide-out-to-left: slide-out-to-left 0.3s ease-out;
+  --animate-slide-out-to-right: slide-out-to-right 0.3s ease-out;
+  --animate-fade-in-0: fade-in-animation 0.3s ease-out;
+  --animate-fade-out-0: fade-out-animation 0.3s ease-out;
 }
 
 /* Source paths for Tailwind to scan */
@@ -144,4 +197,57 @@ body {
 
 .text-shadow {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Sheet/Drawer animation utilities */
+.animate-in {
+  animation-duration: 0.3s;
+  animation-fill-mode: both;
+  animation-timing-function: ease-out;
+}
+
+.animate-out {
+  animation-duration: 0.2s;
+  animation-fill-mode: both;
+  animation-timing-function: ease-in;
+}
+
+.fade-in-0 {
+  animation-name: fade-in-animation;
+}
+
+.fade-out-0 {
+  animation-name: fade-out-animation;
+}
+
+.slide-in-from-top {
+  animation-name: slide-in-from-top;
+}
+
+.slide-in-from-bottom {
+  animation-name: slide-in-from-bottom;
+}
+
+.slide-in-from-left {
+  animation-name: slide-in-from-left;
+}
+
+.slide-in-from-right {
+  animation-name: slide-in-from-right;
+}
+
+.slide-out-to-top {
+  animation-name: slide-out-to-top;
+}
+
+.slide-out-to-bottom {
+  animation-name: slide-out-to-bottom;
+}
+
+.slide-out-to-left {
+  animation-name: slide-out-to-left;
+}
+
+.slide-out-to-right {
+  animation-name: slide-out-to-right;
 }

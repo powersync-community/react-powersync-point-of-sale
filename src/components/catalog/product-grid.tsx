@@ -1,7 +1,8 @@
 import { useLiveQuery } from "@tanstack/react-db";
 import { eq, like, or } from "@tanstack/db";
-import { Search, PackageX } from "lucide-react";
+import { Search, PackageX, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ProductCard } from "./product-card";
 import { productsCollection } from "@/collections";
@@ -11,6 +12,10 @@ interface ProductGridProps {
   selectedCategory: string | null;
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  /** Callback to open categories sheet on mobile */
+  onOpenCategories?: () => void;
+  /** Whether to show the category button (mobile only) */
+  showCategoryButton?: boolean;
 }
 
 /**
@@ -21,6 +26,8 @@ export function ProductGrid({
   selectedCategory,
   searchQuery,
   onSearchChange,
+  onOpenCategories,
+  showCategoryButton = false,
 }: ProductGridProps) {
   const { addItem } = useCart();
 
@@ -54,14 +61,29 @@ export function ProductGrid({
     <div className="h-full flex flex-col">
       {/* Search Bar */}
       <div className="p-4 border-b border-border">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search products..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10 h-11"
-          />
+        <div className="flex gap-2">
+          {/* Category Button - Mobile Only */}
+          {showCategoryButton && (
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-11 w-11 shrink-0"
+              onClick={onOpenCategories}
+              aria-label="Open categories"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          )}
+          {/* Search Input */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="pl-10 h-11"
+            />
+          </div>
         </div>
       </div>
 
