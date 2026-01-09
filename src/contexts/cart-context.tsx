@@ -199,20 +199,8 @@ export function CartProvider({ children }: CartProviderProps) {
   }, [cashier, currentSaleId]);
 
   /**
-   * Update the draft sale's total amount
-   */
-  const updateSaleTotal = useCallback(
-    async (saleId: string, newTotal: number) => {
-      await powerSync.execute(
-        `UPDATE ${SALES_TABLE} SET total_amount = ? WHERE id = ?`,
-        [newTotal, saleId]
-      );
-    },
-    []
-  );
-
-  /**
    * Add product to cart - persists to local database
+   * Uses a transaction to ensure item update and total recalculation are atomic
    */
   const addItem = useCallback(
     async (product: Product) => {
@@ -220,133 +208,151 @@ export function CartProvider({ children }: CartProviderProps) {
 
       try {
         const saleId = await getOrCreateDraftSale();
-        console.log("saleId", saleId);
 
-        // Check if product already exists in cart
-        const existingItem = await powerSync
-          .get<{ id: string; quantity: number; unit_price: number }>(
-            `SELECT id, quantity, unit_price FROM ${SALE_ITEMS_TABLE} WHERE sale_id = ? AND product_id = ?`,
-            [saleId, product.id]
-          )
-          .catch(() => null);
+        await powerSync.writeTransaction(async (tx) => {
+          // Check if product already exists in cart
+          const existingItem = await tx
+            .get<{ id: string; quantity: number; unit_price: number }>(
+              `SELECT id, quantity, unit_price FROM ${SALE_ITEMS_TABLE} WHERE sale_id = ? AND product_id = ?`,
+              [saleId, product.id]
+            )
+            .catch(() => null);
 
-        if (existingItem) {
-          // Update existing item quantity using UPDATE (not DELETE+INSERT)
-          const newQuantity = existingItem.quantity + 1;
-          const newSubtotal = newQuantity * existingItem.unit_price;
+          if (existingItem) {
+            // Update existing item quantity using UPDATE (not DELETE+INSERT)
+            const newQuantity = existingItem.quantity + 1;
+            const newSubtotal = newQuantity * existingItem.unit_price;
 
-          await powerSync.execute(
-            `UPDATE ${SALE_ITEMS_TABLE} SET quantity = ?, subtotal = ? WHERE id = ?`,
-            [newQuantity, newSubtotal, existingItem.id]
+            await tx.execute(
+              `UPDATE ${SALE_ITEMS_TABLE} SET quantity = ?, subtotal = ? WHERE id = ?`,
+              [newQuantity, newSubtotal, existingItem.id]
+            );
+          } else {
+            // Add new item
+            const itemId = generateId();
+            const now = new Date().toISOString();
+
+            await tx.execute(
+              `INSERT INTO ${SALE_ITEMS_TABLE} (id, sale_id, product_id, quantity, unit_price, subtotal, created_at) 
+               VALUES (?, ?, ?, ?, ?, ?, ?)`,
+              [itemId, saleId, product.id, 1, product.price, product.price, now]
+            );
+          }
+
+          // Recalculate and update total within the same transaction
+          const result = await tx.get<{ total: number }>(
+            `SELECT COALESCE(SUM(subtotal), 0) as total FROM ${SALE_ITEMS_TABLE} WHERE sale_id = ?`,
+            [saleId]
           );
+          const newTotal = result?.total ?? 0;
 
-          // Update sale total
-          const newTotal =
-            total - existingItem.quantity * existingItem.unit_price + newSubtotal;
-          await updateSaleTotal(saleId, newTotal);
-        } else {
-          // Add new item
-          const itemId = generateId();
-          const now = new Date().toISOString();
-
-          await powerSync.execute(
-            `INSERT INTO ${SALE_ITEMS_TABLE} (id, sale_id, product_id, quantity, unit_price, subtotal, created_at) 
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [itemId, saleId, product.id, 1, product.price, product.price, now]
+          await tx.execute(
+            `UPDATE ${SALES_TABLE} SET total_amount = ? WHERE id = ?`,
+            [newTotal, saleId]
           );
-
-          // Update sale total
-          const newTotal = total + product.price;
-          await updateSaleTotal(saleId, newTotal);
-        }
+        });
       } catch (err) {
         console.error("Error adding item to cart:", err);
       }
     },
-    [cashier, getOrCreateDraftSale, total, updateSaleTotal]
+    [cashier, getOrCreateDraftSale]
   );
 
   /**
    * Update item quantity - persists to local database
+   * Uses a transaction to ensure item update and total recalculation are atomic
    */
   const updateQuantity = useCallback(
     async (productId: string, quantity: number) => {
       if (!currentSaleId) return;
 
       try {
-        // Get existing item
-        const existingItem = await powerSync
-          .get<{ id: string; unit_price: number; subtotal: number }>(
-            `SELECT id, unit_price, subtotal FROM ${SALE_ITEMS_TABLE} WHERE sale_id = ? AND product_id = ?`,
-            [currentSaleId, productId]
-          )
-          .catch(() => null);
+        await powerSync.writeTransaction(async (tx) => {
+          // Get existing item
+          const existingItem = await tx
+            .get<{ id: string; unit_price: number }>(
+              `SELECT id, unit_price FROM ${SALE_ITEMS_TABLE} WHERE sale_id = ? AND product_id = ?`,
+              [currentSaleId, productId]
+            )
+            .catch(() => null);
 
-        if (!existingItem) return;
+          if (!existingItem) return;
 
-        const oldSubtotal = existingItem.subtotal;
+          if (quantity <= 0) {
+            // Remove item
+            await tx.execute(`DELETE FROM ${SALE_ITEMS_TABLE} WHERE id = ?`, [
+              existingItem.id,
+            ]);
+          } else {
+            // Update quantity using UPDATE (not DELETE+INSERT)
+            const newSubtotal = quantity * existingItem.unit_price;
 
-        if (quantity <= 0) {
-          // Remove item
-          await powerSync.execute(
-            `DELETE FROM ${SALE_ITEMS_TABLE} WHERE id = ?`,
-            [existingItem.id]
+            await tx.execute(
+              `UPDATE ${SALE_ITEMS_TABLE} SET quantity = ?, subtotal = ? WHERE id = ?`,
+              [quantity, newSubtotal, existingItem.id]
+            );
+          }
+
+          // Recalculate and update total within the same transaction
+          const result = await tx.get<{ total: number }>(
+            `SELECT COALESCE(SUM(subtotal), 0) as total FROM ${SALE_ITEMS_TABLE} WHERE sale_id = ?`,
+            [currentSaleId]
           );
+          const newTotal = result?.total ?? 0;
 
-          // Update sale total
-          const newTotal = Math.max(0, total - oldSubtotal);
-          await updateSaleTotal(currentSaleId, newTotal);
-        } else {
-          // Update quantity using UPDATE (not DELETE+INSERT)
-          const newSubtotal = quantity * existingItem.unit_price;
-
-          await powerSync.execute(
-            `UPDATE ${SALE_ITEMS_TABLE} SET quantity = ?, subtotal = ? WHERE id = ?`,
-            [quantity, newSubtotal, existingItem.id]
+          await tx.execute(
+            `UPDATE ${SALES_TABLE} SET total_amount = ? WHERE id = ?`,
+            [newTotal, currentSaleId]
           );
-
-          // Update sale total
-          const newTotal = total - oldSubtotal + newSubtotal;
-          await updateSaleTotal(currentSaleId, newTotal);
-        }
+        });
       } catch (err) {
         console.error("Error updating quantity:", err);
       }
     },
-    [currentSaleId, total, updateSaleTotal]
+    [currentSaleId]
   );
 
   /**
    * Remove item from cart - persists to local database
+   * Uses a transaction to ensure item removal and total recalculation are atomic
    */
   const removeItem = useCallback(
     async (productId: string) => {
       if (!currentSaleId) return;
 
       try {
-        // Get item to remove
-        const existingItem = await powerSync
-          .get<{ id: string; subtotal: number }>(
-            `SELECT id, subtotal FROM ${SALE_ITEMS_TABLE} WHERE sale_id = ? AND product_id = ?`,
-            [currentSaleId, productId]
-          )
-          .catch(() => null);
+        await powerSync.writeTransaction(async (tx) => {
+          // Get item to remove
+          const existingItem = await tx
+            .get<{ id: string }>(
+              `SELECT id FROM ${SALE_ITEMS_TABLE} WHERE sale_id = ? AND product_id = ?`,
+              [currentSaleId, productId]
+            )
+            .catch(() => null);
 
-        if (!existingItem) return;
+          if (!existingItem) return;
 
-        await powerSync.execute(
-          `DELETE FROM ${SALE_ITEMS_TABLE} WHERE id = ?`,
-          [existingItem.id]
-        );
+          await tx.execute(`DELETE FROM ${SALE_ITEMS_TABLE} WHERE id = ?`, [
+            existingItem.id,
+          ]);
 
-        // Update sale total
-        const newTotal = Math.max(0, total - existingItem.subtotal);
-        await updateSaleTotal(currentSaleId, newTotal);
+          // Recalculate and update total within the same transaction
+          const result = await tx.get<{ total: number }>(
+            `SELECT COALESCE(SUM(subtotal), 0) as total FROM ${SALE_ITEMS_TABLE} WHERE sale_id = ?`,
+            [currentSaleId]
+          );
+          const newTotal = result?.total ?? 0;
+
+          await tx.execute(
+            `UPDATE ${SALES_TABLE} SET total_amount = ? WHERE id = ?`,
+            [newTotal, currentSaleId]
+          );
+        });
       } catch (err) {
         console.error("Error removing item:", err);
       }
     },
-    [currentSaleId, total, updateSaleTotal]
+    [currentSaleId]
   );
 
   /**
