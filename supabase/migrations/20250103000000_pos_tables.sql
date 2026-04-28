@@ -1,15 +1,14 @@
 -- Point of Sale System Tables Migration
 -- Creates all necessary tables for the retail POS MVP
-
--- Enable UUID extension if not already enabled
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- UUID generation uses Postgres' built-in gen_random_uuid() (Postgres 13+)
+-- to avoid schema-path issues with the Supabase-managed uuid-ossp extension.
 
 -- ============================================
 -- CASHIERS TABLE
 -- Stores cashier/staff information with PIN authentication
 -- ============================================
 CREATE TABLE cashiers (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     pin_hash TEXT NOT NULL,
     is_active BOOLEAN NOT NULL DEFAULT true,
@@ -24,7 +23,7 @@ CREATE INDEX idx_cashiers_active ON cashiers(is_active) WHERE is_active = true;
 -- Product categories for organizing the catalog
 -- ============================================
 CREATE TABLE categories (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     description TEXT,
     image_url TEXT,
@@ -40,7 +39,7 @@ CREATE INDEX idx_categories_sort ON categories(sort_order);
 -- Product catalog with pricing and inventory
 -- ============================================
 CREATE TABLE products (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
     name TEXT NOT NULL,
     sku TEXT UNIQUE,
@@ -61,7 +60,7 @@ CREATE INDEX idx_products_sku ON products(sku) WHERE sku IS NOT NULL;
 -- Sales transactions header
 -- ============================================
 CREATE TABLE sales (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     cashier_id UUID NOT NULL REFERENCES cashiers(id),
     total_amount DECIMAL(10, 2) NOT NULL DEFAULT 0 CHECK (total_amount >= 0),
     status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'completed', 'voided')),
@@ -79,7 +78,7 @@ CREATE INDEX idx_sales_created ON sales(created_at DESC);
 -- Line items for each sale
 -- ============================================
 CREATE TABLE sale_items (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     sale_id UUID NOT NULL REFERENCES sales(id) ON DELETE CASCADE,
     product_id UUID NOT NULL REFERENCES products(id),
     quantity INTEGER NOT NULL CHECK (quantity > 0),

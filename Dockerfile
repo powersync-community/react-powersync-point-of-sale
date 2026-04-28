@@ -6,20 +6,23 @@ FROM node:lts-alpine AS build
 ENV NPM_CONFIG_UPDATE_NOTIFIER=false
 ENV NPM_CONFIG_FUND=false
 
+# Enable pnpm via corepack (version is pinned in package.json#packageManager)
+RUN corepack enable
+
 # Create and change to the app directory.
 WORKDIR /app
 
-# Copy the files to the container image
-COPY package*.json ./
+# Copy lockfile + manifest first so dependency layer caches well
+COPY package.json pnpm-lock.yaml ./
 
 # Install packages
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 
 # Copy local code to the container image.
 COPY . ./
 
 # Build the app.
-RUN npm run build
+RUN pnpm run build
 
 # Use the Caddy image
 FROM caddy
