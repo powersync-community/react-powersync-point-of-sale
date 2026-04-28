@@ -113,7 +113,7 @@ export function ProductGrid({
         </div>
       </ScrollArea>
 
-      <div className="p-2 border-t border-border text-center text-xs text-muted-foreground">
+      <div className="p-2 text-center text-xs text-muted-foreground">
         {products.length} product{products.length !== 1 && "s"} found
       </div>
     </div>

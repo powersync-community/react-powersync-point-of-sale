@@ -60,8 +60,7 @@ export function OrderSummary({ items, total }: OrderSummaryProps) {
           <span className="text-muted-foreground">Tax (0%)</span>
           <span className="tabular-nums">{formatCurrency(0)}</span>
         </div>
-        <Separator />
-        <div className="flex justify-between pt-2">
+        <div className="flex justify-between pt-3">
           <span className="text-xl font-bold">Total</span>
           <span className="pos-price text-3xl text-primary font-bold">
             {formatCurrency(total)}

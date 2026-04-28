@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import { powerSync } from "@/powersync/System";
 import { connector } from "@/powersync/SupabaseConnector";
-import { CASHIERS_TABLE, type CashierRecord } from "@/powersync/AppSchema";
+import { CASHIERS_TABLE } from "@/powersync/AppSchema";
+import { generateId } from "@/lib/utils";
 
 export interface AuthenticatedCashier {
   id: string;
@@ -12,7 +13,7 @@ interface AuthContextType {
   cashier: AuthenticatedCashier | null;
   isAuthenticating: boolean;
   error: string | null;
-  loginWithPin: (pin: string) => Promise<boolean>;
+  loginWithName: (name: string) => Promise<boolean>;
   logout: () => Promise<void>;
   clearError: () => void;
 }
@@ -36,58 +37,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loginWithPin = useCallback(async (pin: string): Promise<boolean> => {
+  const loginWithName = useCallback(async (name: string): Promise<boolean> => {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      setError("Please enter a name to continue.");
+      return false;
+    }
+
     setIsAuthenticating(true);
     setError(null);
 
     try {
-      const result = await powerSync.getAll<CashierRecord>(
-        `SELECT * FROM ${CASHIERS_TABLE} WHERE pin_hash = ? AND is_active = 1 LIMIT 1`,
-        [pin]
-      );
-
-      if (result.length === 0) {
-        if (pin.length === 4) {
-          setCashier({
-            id: `demo-${pin}`,
-            name: `Cashier ${pin}`,
-          });
-          setIsAuthenticating(false);
-          return true;
-        }
-        
-        setError("Invalid PIN. Please try again.");
-        setIsAuthenticating(false);
-        return false;
-      }
-
-      const foundCashier = result[0];
-      
       try {
         await connector.signInAnonymously();
       } catch {
         console.warn("Supabase auth unavailable, continuing in offline mode");
       }
 
-      setCashier({
-        id: foundCashier.id,
-        name: foundCashier.name ?? "Unknown",
-      });
+      const id = generateId();
+      const now = new Date().toISOString();
 
+      await powerSync.execute(
+        `INSERT INTO ${CASHIERS_TABLE} (id, name, pin_hash, is_active, created_at) VALUES (?, ?, ?, 1, ?)`,
+        [id, trimmedName, `demo-${id.slice(0, 8)}`, now]
+      );
+
+      setCashier({ id, name: trimmedName });
       setIsAuthenticating(false);
       return true;
     } catch (err) {
       console.error("Login error:", err);
-      
-      if (pin.length === 4) {
-        setCashier({
-          id: `demo-${pin}`,
-          name: `Demo Cashier`,
-        });
-        setIsAuthenticating(false);
-        return true;
-      }
-      
       setError("An error occurred during login. Please try again.");
       setIsAuthenticating(false);
       return false;
@@ -109,7 +88,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         cashier,
         isAuthenticating,
         error,
-        loginWithPin,
+        loginWithName,
         logout,
         clearError,
       }}

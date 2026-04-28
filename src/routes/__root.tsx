@@ -2,9 +2,11 @@ import { Outlet, createRootRoute } from "@tanstack/react-router";
 import { useStatus } from "@powersync/react";
 import { Wifi, WifiOff, Cloud, CloudOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SyncStatusIndicator } from "@/components/sync-status-indicator";
 
 function RootComponent() {
   const status = useStatus();
+  const connected = !!status?.connected;
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">
@@ -14,41 +16,31 @@ function RootComponent() {
             PowerSync POS Demo
           </span>
         </div>
-        
+
         <div className="flex items-center gap-4">
+          <SyncStatusIndicator />
+
           <div className="flex items-center gap-1.5">
-            {status?.dataFlowStatus?.downloading ? (
-              <Cloud className="h-3.5 w-3.5 text-primary animate-pulse" />
-            ) : status?.dataFlowStatus?.uploading ? (
-              <Cloud className="h-3.5 w-3.5 text-accent animate-pulse" />
-            ) : status?.connected ? (
+            {connected ? (
               <Cloud className="h-3.5 w-3.5 text-success" />
             ) : (
               <CloudOff className="h-3.5 w-3.5 text-muted-foreground" />
             )}
             <span className="text-muted-foreground">
-              {status?.dataFlowStatus?.downloading
-                ? "Syncing..."
-                : status?.dataFlowStatus?.uploading
-                  ? "Uploading..."
-                  : status?.connected
-                    ? "Synced"
-                    : "Offline"}
+              {connected ? "Synced" : "Offline"}
             </span>
           </div>
 
           <div className="flex items-center gap-1.5">
-            {status?.connected ? (
+            {connected ? (
               <Wifi className="h-3.5 w-3.5 text-success" />
             ) : (
               <WifiOff className="h-3.5 w-3.5 text-destructive" />
             )}
             <span
-              className={cn(
-                status?.connected ? "text-success" : "text-destructive"
-              )}
+              className={cn(connected ? "text-success" : "text-destructive")}
             >
-              {status?.connected ? "Online" : "Offline"}
+              {connected ? "Online" : "Offline"}
             </span>
           </div>
         </div>

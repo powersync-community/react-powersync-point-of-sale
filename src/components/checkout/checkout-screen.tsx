@@ -20,18 +20,22 @@ export function CheckoutScreen() {
   const { items, total, completeSale, isProcessing } = useCart();
   const [completedSaleId, setCompletedSaleId] = useState<string | null>(null);
   const [completedAt, setCompletedAt] = useState<Date | null>(null);
+  const [completedTotal, setCompletedTotal] = useState<number | null>(null);
 
   const handleMarkAsPaid = async () => {
+    const finalTotal = total;
     const saleId = await completeSale();
     if (saleId) {
       setCompletedSaleId(saleId);
       setCompletedAt(new Date());
+      setCompletedTotal(finalTotal);
     }
   };
 
   const handleNewSale = () => {
     setCompletedSaleId(null);
     setCompletedAt(null);
+    setCompletedTotal(null);
     navigate({ to: "/" });
   };
 
@@ -104,7 +108,9 @@ export function CheckoutScreen() {
               <div className="border-t border-dashed border-border pt-3 mt-3">
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total Paid</span>
-                  <span className="text-primary">{formatCurrency(total)}</span>
+                  <span className="text-primary">
+                    {formatCurrency(completedTotal ?? 0)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -166,8 +172,9 @@ export function CheckoutScreen() {
           </div>
 
           <Button
+            variant="success"
             size="xl"
-            className="w-full h-16 text-xl font-bold gradient-primary"
+            className="w-full h-16 text-xl font-bold"
             onClick={handleMarkAsPaid}
             disabled={isProcessing}
           >
@@ -189,7 +196,7 @@ export function CheckoutScreen() {
           </p>
         </div>
 
-        <div className="mt-auto pt-6 border-t border-border text-sm text-muted-foreground">
+        <div className="mt-auto text-sm text-muted-foreground">
           <p>Cashier: {cashier?.name}</p>
         </div>
       </div>

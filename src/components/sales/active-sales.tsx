@@ -1,67 +1,45 @@
-import { useMemo } from "react";
-import { useLiveQuery } from "@tanstack/react-db";
-import { eq } from "@tanstack/db";
+import { useQuery } from "@powersync/react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, ShoppingCart, User, Activity, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  salesCollection,
-  saleItemsCollection,
-  cashiersCollection,
-  SALE_STATUS,
-} from "@/collections";
+  SALES_TABLE,
+  SALE_ITEMS_TABLE,
+  CASHIERS_TABLE,
+} from "@/powersync/AppSchema";
 import { formatCurrency } from "@/lib/utils";
 
+interface ActiveSaleRow {
+  id: string;
+  total_amount: number | null;
+  cashier_name: string | null;
+  item_count: number | null;
+}
+
+const ACTIVE_SALES_QUERY = `
+  SELECT
+    s.id              AS id,
+    s.total_amount    AS total_amount,
+    c.name            AS cashier_name,
+    COALESCE(
+      (SELECT SUM(si.quantity) FROM ${SALE_ITEMS_TABLE} si WHERE si.sale_id = s.id),
+      0
+    )                 AS item_count
+  FROM ${SALES_TABLE} s
+  LEFT JOIN ${CASHIERS_TABLE} c ON c.id = s.cashier_id
+  WHERE s.status = 'draft'
+  ORDER BY s.created_at DESC
+`;
+
 export function ActiveSales() {
-  const { data: rawActiveSales = [], isLoading: salesLoading } = useLiveQuery(
-    (q) =>
-      q
-        .from({ sale: salesCollection })
-        .where(({ sale }) => eq(sale.status, SALE_STATUS.DRAFT))
-        .orderBy(({ sale }) => sale.created_at, "desc")
-  );
-
-  const { data: cashiers = [] } = useLiveQuery((q) =>
-    q.from({ c: cashiersCollection })
-  );
-
-  const { data: allSaleItems = [] } = useLiveQuery((q) =>
-    q.from({ si: saleItemsCollection })
-  );
-
-  const cashierMap = useMemo(
-    () => new Map(cashiers.map((c) => [c.id, c])),
-    [cashiers]
-  );
-
-  const itemCountMap = useMemo(() => {
-    const counts = new Map<string, number>();
-    allSaleItems.forEach((item) => {
-      if (item.sale_id) {
-        const current = counts.get(item.sale_id) ?? 0;
-        counts.set(item.sale_id, current + (item.quantity ?? 1));
-      }
-    });
-    return counts;
-  }, [allSaleItems]);
-
-  const activeSales = useMemo(() => {
-    return rawActiveSales.map((sale) => {
-      const cashier = sale.cashier_id ? cashierMap.get(sale.cashier_id) : null;
-      return {
-        id: sale.id,
-        total_amount: sale.total_amount ?? 0,
-        cashier_name: cashier?.name ?? "Unknown",
-        item_count: itemCountMap.get(sale.id) ?? 0,
-      };
-    });
-  }, [rawActiveSales, cashierMap, itemCountMap]);
+  const { data: activeSales = [], isLoading: salesLoading } =
+    useQuery<ActiveSaleRow>(ACTIVE_SALES_QUERY);
 
   const totalActiveSales = activeSales.length;
   const totalPendingValue = activeSales.reduce(
-    (sum, s) => sum + s.total_amount,
+    (sum, s) => sum + (s.total_amount ?? 0),
     0
   );
 
@@ -152,16 +130,17 @@ export function ActiveSales() {
                       <User className="h-3 w-3 text-primary" />
                     </div>
                     <span className="text-sm font-medium truncate">
-                      {sale.cashier_name}
+                      {sale.cashier_name ?? "Unknown"}
                     </span>
                   </div>
 
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">
-                      {sale.item_count} {sale.item_count === 1 ? "item" : "items"}
+                      {sale.item_count ?? 0}{" "}
+                      {sale.item_count === 1 ? "item" : "items"}
                     </span>
                     <span className="text-lg font-bold text-primary">
-                      {formatCurrency(sale.total_amount)}
+                      {formatCurrency(sale.total_amount ?? 0)}
                     </span>
                   </div>
                 </CardContent>
@@ -171,15 +150,6 @@ export function ActiveSales() {
         )}
       </div>
 
-      <div className="p-3 border-t border-border bg-muted/30">
-        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
-          </span>
-          <span>Real-time sync enabled</span>
-        </div>
-      </div>
     </div>
   );
 }
