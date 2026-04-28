@@ -1,3 +1,9 @@
+# check=skip=SecretsUsedInArgOrEnv
+
+# BuildKit's lint rule flags any ARG/ENV whose name contains "KEY".
+# VITE_SUPABASE_PUBLISHABLE_KEY is the Supabase publishable (public) key —
+# it ships in the browser bundle by design and is not a secret.
+
 # Use the Node alpine official image
 # https://hub.docker.com/_/node
 FROM node:lts-alpine AS build
