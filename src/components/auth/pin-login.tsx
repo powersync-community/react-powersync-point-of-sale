@@ -49,9 +49,11 @@ export function PinLogin() {
   return (
     <Card className="w-full max-w-md bg-gradient-to-b from-card to-background border-2 border-border shadow-2xl">
       <CardHeader className="text-center pb-2">
-        <div className="mx-auto mb-4 h-16 w-16 rounded-2xl gradient-primary flex items-center justify-center shadow-lg shadow-primary/30">
-          <LogIn className="h-8 w-8 text-white" />
-        </div>
+        <img
+          src="/icons/powersync-logo.png"
+          alt="PowerSync"
+          className="mx-auto mb-4 h-16 w-16 object-contain"
+        />
         <CardTitle className="text-2xl">Enter PIN</CardTitle>
         <p className="text-sm text-muted-foreground mt-1">
           Enter your 4-digit cashier PIN to continue

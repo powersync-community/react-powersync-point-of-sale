@@ -7,7 +7,7 @@ function RootComponent() {
   const status = useStatus();
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{ background: 'rgb(0, 19, 31)' }}>
+    <div className="h-screen flex flex-col overflow-hidden bg-background">
       <div className="h-8 bg-card border-b border-border flex items-center justify-between px-4 text-xs">
         <div className="flex items-center gap-4">
           <span className="text-muted-foreground font-medium">
