@@ -108,7 +108,7 @@ export function ActiveSales() {
             {activeSales.map((sale, idx) => (
               <article
                 key={sale.id}
-                className="group relative bg-card border border-border hover:border-primary/40 transition-colors p-5 overflow-hidden"
+                className="group relative bg-card border border-border rounded-md hover:border-primary/40 transition-colors p-5 overflow-hidden"
               >
                 <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-primary/60 via-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 

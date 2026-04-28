@@ -34,19 +34,19 @@ export const powerSync = new PowerSyncDatabase({
 
 /**
  * Initialize PowerSync connection
- * Attempts anonymous sign-in, but doesn't block app loading if it fails
+ * Attempts anonymous sign-in but doesn't block app loading if it fails
  */
-export async function initializePowerSync() {
+async function initializePowerSync() {
   try {
     // Try to sign in anonymously to Supabase
     await connector.signInAnonymously();
-    
+
     // Connect PowerSync with Supabase
-    powerSync.connect(connector, { 
-      clientImplementation: SyncClientImplementation.RUST, 
-      crudUploadThrottleMs: 5000 
+    powerSync.connect(connector, {
+      clientImplementation: SyncClientImplementation.RUST,
+      crudUploadThrottleMs: 5000
     });
-    
+
     console.log("PowerSync connected successfully");
   } catch (error) {
     console.warn("PowerSync connection failed, running in offline mode:", error);

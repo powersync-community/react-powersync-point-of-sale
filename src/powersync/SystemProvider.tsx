@@ -17,5 +17,3 @@ export const SystemProvider = ({ children }: { children: React.ReactNode }) => {
     </PowerSyncContext.Provider>
   );
 };
-
-export default SystemProvider;

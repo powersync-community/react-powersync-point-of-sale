@@ -82,7 +82,7 @@ export function ProductGrid({
           {isLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
               {Array.from({ length: 10 }).map((_, i) => (
-                <div key={i} className="bg-card border border-border">
+                <div key={i} className="bg-card border border-border rounded-md overflow-hidden">
                   <div className="aspect-square bg-muted/40 animate-pulse" />
                   <div className="p-3 space-y-2">
                     <div className="h-3 bg-muted/40 animate-pulse w-3/4" />

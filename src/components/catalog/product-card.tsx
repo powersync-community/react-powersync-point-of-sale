@@ -17,7 +17,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
       onClick={() => !isOutOfStock && onAddToCart(product)}
       disabled={isOutOfStock}
       className={cn(
-        "group relative flex flex-col text-left bg-card border border-border",
+        "group relative flex flex-col text-left bg-card border border-border rounded-md overflow-hidden",
         "hover:border-primary/50 active:scale-[0.98] transition-all",
         "disabled:cursor-not-allowed disabled:hover:border-border",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"

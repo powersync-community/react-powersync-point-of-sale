@@ -186,7 +186,7 @@ INSERT INTO products (id, category_id, name, sku, price, image_url, stock_quanti
     ('b1111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', 'Potato Chips', 'SNK-001', 2.49, 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=200', 60),
     ('b2222222-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', 'Chocolate Bar', 'SNK-002', 1.99, 'https://images.unsplash.com/photo-1548907040-4baa42d10919?w=200', 100),
     ('b3333333-3333-3333-3333-333333333333', '22222222-2222-2222-2222-222222222222', 'Trail Mix', 'SNK-003', 4.99, 'https://images.unsplash.com/photo-1604068549290-dea0e4a305ca?w=200', 35),
-    ('b4444444-4444-4444-4444-444444444444', '22222222-2222-2222-2222-222222222222', 'Granola Bar', 'SNK-004', 1.49, 'https://images.unsplash.com/photo-1558401546-6ab6a1fa706d?w=200', 75),
+    ('b4444444-4444-4444-4444-444444444444', '22222222-2222-2222-2222-222222222222', 'Granola Bar', 'SNK-004', 1.49, 'https://images.unsplash.com/photo-1633360821154-1935fb5671e6?w=200', 75),
     
     -- Fresh Food
     ('c1111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333', 'Turkey Sandwich', 'FRE-001', 7.99, 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=200', 20),

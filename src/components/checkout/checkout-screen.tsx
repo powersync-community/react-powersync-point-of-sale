@@ -82,7 +82,7 @@ export function CheckoutScreen() {
               </span>
             </div>
 
-            <div className="bg-card border border-border p-6 font-mono text-sm print:bg-white print:text-black print:border-0 print:shadow-none">
+            <div className="bg-card border border-border rounded-md p-6 font-mono text-sm print:bg-white print:text-black print:border-0 print:shadow-none print:rounded-none">
               <div className="text-center pb-4 mb-4 border-b border-dashed border-border print:border-black/40">
                 <div className="text-base font-bold tracking-[0.3em] uppercase">
                   PowerSync
@@ -153,7 +153,7 @@ export function CheckoutScreen() {
               <button
                 type="button"
                 onClick={handlePrintReceipt}
-                className="h-12 border border-border text-sm font-semibold tracking-tight hover:border-primary/50 hover:text-primary transition-colors flex items-center justify-center gap-2"
+                className="h-12 rounded-md border border-border text-sm font-semibold tracking-tight hover:border-primary/50 hover:text-primary transition-colors flex items-center justify-center gap-2"
               >
                 <Printer className="h-4 w-4" />
                 print
@@ -161,7 +161,7 @@ export function CheckoutScreen() {
               <button
                 type="button"
                 onClick={handleNewSale}
-                className="h-12 bg-primary text-primary-foreground text-sm font-semibold tracking-tight hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                className="h-12 rounded-md bg-primary text-primary-foreground text-sm font-semibold tracking-tight hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
               >
                 <ShoppingBag className="h-4 w-4" />
                 new sale
@@ -219,7 +219,7 @@ export function CheckoutScreen() {
             onClick={handleMarkAsPaid}
             disabled={isProcessing}
             className={cn(
-              "hidden md:flex w-full h-16 bg-success text-success-foreground items-center justify-between px-5 group",
+              "hidden md:flex w-full h-16 rounded-md bg-success text-success-foreground items-center justify-between px-5 group",
               "hover:bg-success/90 hover:shadow-lg hover:shadow-success/20 transition-all",
               "disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:shadow-none",
               "text-lg font-semibold tracking-tight mt-6"

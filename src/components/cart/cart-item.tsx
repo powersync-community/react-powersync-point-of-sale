@@ -36,7 +36,7 @@ export function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
         </div>
 
         <div className="flex items-center gap-3 mt-2">
-          <div className="inline-flex items-center border border-border">
+          <div className="inline-flex items-center border border-border rounded-md overflow-hidden">
             <button
               type="button"
               onClick={() =>

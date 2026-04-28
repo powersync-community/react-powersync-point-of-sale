@@ -98,7 +98,7 @@ export function CartSidebar({ onClose }: CartSidebarProps) {
             type="button"
             disabled={!hasItems}
             className={cn(
-              "w-full h-14 bg-primary text-primary-foreground transition-all flex items-center justify-between px-5 group",
+              "w-full h-14 rounded-md bg-primary text-primary-foreground transition-all flex items-center justify-between px-5 group",
               "hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20",
               "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:hover:bg-primary",
               "text-base font-semibold tracking-tight"

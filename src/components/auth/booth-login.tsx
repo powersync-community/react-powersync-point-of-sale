@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, RefreshCw, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
@@ -10,14 +10,13 @@ export function BoothLogin() {
   const { loginWithName, isAuthenticating, error, clearError } = useAuth();
   const [name, setName] = useState(() => generateFunnyName());
   const [isEditing, setIsEditing] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (isEditing) {
-      inputRef.current?.focus();
-      inputRef.current?.select();
+  const focusOnMount = useCallback((node: HTMLInputElement | null) => {
+    if (node) {
+      node.focus();
+      node.select();
     }
-  }, [isEditing]);
+  }, []);
 
   const handleRegenerate = useCallback(() => {
     setName(generateFunnyName());
@@ -76,7 +75,7 @@ export function BoothLogin() {
       <div className="relative mb-2 group">
         {isEditing ? (
           <input
-            ref={inputRef}
+            ref={focusOnMount}
             value={name}
             onChange={(e) => {
               clearError();

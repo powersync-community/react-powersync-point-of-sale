@@ -13,7 +13,7 @@ import {
   type Session,
 } from "@supabase/supabase-js";
 
-export type SupabaseConfig = {
+type SupabaseConfig = {
   supabaseUrl: string;
   supabasePublishableKey: string;
   powersyncUrl: string;
