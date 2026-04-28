@@ -10,6 +10,8 @@ A demo offline-first, web-based, Point of Sale system built with React, PowerSyn
 - **State Management**: [TanStack DB Collections](https://tanstack.com/db/latest/docs/collections/powersync-collection) with the [PowerSync Web SDK](https://docs.powersync.com/client-sdk-references/javascript-web)
 - **Source Database**: [Supabase](https://supabase.com/docs) (PostgreSQL)
 - **Build Tool**: [Vite](https://vite.dev/guide/)
+- **Offline shell**: [vite-plugin-pwa](https://vite-pwa-org.netlify.app/) (Workbox service worker, installable PWA)
+- **Theme**: official PowerSync brand palette (defined in `src/index.css`)
 
 ## Getting Started
 
@@ -139,8 +141,20 @@ For demo/development purposes, the following PINs are available:
 - Enter any 4-digit PIN to log in as a demo cashier (see login screen for options)
 - Add items to the cart
 - Complete orders
-- View real-time sales updates (if other cashiers are creating orders)
+- Watch other cashiers' draft sales appear live on the **Active Sales** screen
 - View sales history (historic sales data)
+
+## Offline Mode
+
+The app installs as a PWA and ships with a Workbox service worker that:
+
+- precaches the app shell, WA-SQLite WASM, and worker bundles on first visit
+- runtime-caches Google Fonts and Unsplash product images (CacheFirst)
+- falls back to `index.html` for any route so deep links work offline
+
+PowerSync continues to handle the data layer through the local SQLite store, so once the app shell is cached you can put the device into airplane mode and keep ringing up sales.
+
+To verify: `pnpm build && pnpm preview`, load the page once, then DevTools → Application → Service Workers → tick **Offline** and reload. The service worker is intentionally disabled in `pnpm dev:ui` to keep HMR responsive.
 
 ## Template
 This demo used the [vite-react-is-powersync-supabase](https://github.com/powersync-community/vite-react-ts-powersync-supabase) template as the base.

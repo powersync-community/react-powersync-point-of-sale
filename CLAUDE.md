@@ -6,10 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Package manager: **pnpm** (required).
 
-- `pnpm dev:ui` — Vite dev server at `http://localhost:5173`
+- `pnpm dev:ui` — Vite dev server at `http://localhost:5173` (service worker disabled in dev)
 - `pnpm dev:supabase` — start local Supabase (`supabase start`)
 - `pnpm dev:powersync:start` / `pnpm dev:powersync:stop` — PowerSync container via `powersync/compose.yaml`
-- `pnpm build` — `tsc -b && vite build`
+- `pnpm build` — `tsc -b && vite build` (also generates the Workbox service worker + manifest)
+- `pnpm preview` — serve the built bundle, the only way to exercise the PWA / offline behaviour locally
 - `pnpm type-check` — `tsc --noEmit`
 - `pnpm lint` — ESLint (flat config, `eslint.config.js`)
 
@@ -43,6 +44,7 @@ CRUD writes are queued by PowerSync and pushed back to Supabase by `SupabaseConn
 - `src/powersync/System.ts` instantiates the singleton `PowerSyncDatabase` (OPFS VFS, multi-tab when `SharedWorker` exists, RUST sync client) and calls `initializePowerSync()` at module load — anonymous Supabase sign-in plus `powerSync.connect(connector, …)`. Failure logs and falls through to offline mode rather than blocking app boot.
 - `src/App.tsx` mounts `AuthProvider` → `CartProvider` → TanStack Router (`routeTree.gen.ts` is generated from `src/routes/*`).
 - `src/routes/__root.tsx` renders the top status bar driven by `useStatus()` from `@powersync/react`.
+- `src/routes/active-sales.tsx` renders the live booth-activity view (draft sales across all cashiers, polled by a `useQuery` SQL join from `@powersync/react`).
 
 ### Auth model
 
@@ -52,8 +54,24 @@ CRUD writes are queued by PowerSync and pushed back to Supabase by `SupabaseConn
 
 `@/*` → `src/*` (configured in `vite.config.ts` and `tsconfig.app.json`).
 
+### Theme
+
+CSS tokens in `src/index.css` map onto the official PowerSync brand palette: primary `#aa00ff`, secondary `#4e89ff`, dark background `#00131f`, accent surfaces from the deep blue scale. The `.dark` block is what actually renders since `index.html` hard-codes `class="dark"`. Cards (`bg-card`) resolve to `#002162` solid. The signature tri-stop `aa00ff → 0055ff → 00d5ff` gradient is exposed as `.gradient-primary`.
+
+### Offline / PWA
+
+`vite-plugin-pwa` generates a Workbox service worker at build time (`pnpm build` writes `dist/sw.js` + `dist/manifest.webmanifest`):
+
+- precache (~8.8 MiB): app shell, all WA-SQLite WASM variants, sync workers, icons, font files
+- runtime cache: Google Fonts (CacheFirst, 1y) and `images.unsplash.com` product images (CacheFirst, 30d, 200 entries)
+- navigation fallback to `/index.html` so any deep link works offline
+- Supabase + PowerSync sync URLs are intentionally **not** matched, so they always hit the network — PowerSync's local SQLite handles offline data
+
+Service worker is disabled in `pnpm dev:ui` (`devOptions.enabled: false` in `vite.config.ts`) to avoid HMR conflicts. Test offline behaviour via `pnpm preview`.
+
 ## Conventions worth knowing
 
 - Coding style guidance lives in `.cursor/rules/optimized-react-powersync.mdc` (functional patterns, mobile-first, ShadCN-style UI primitives in `src/components/ui/`, Zod for validation).
 - Table names always come from the constants exported by `AppSchema.ts` — don't hardcode strings in SQL.
 - New synced fields require: column in `AppSchema.ts`, Zod field in the matching `collections/*.ts`, a Supabase migration, and a column in the relevant `SELECT` inside `powersync/sync-rules.yaml`.
+- When adding new external image/font origins, also add a `runtimeCaching` rule in `vite.config.ts` so the asset survives airplane mode.
