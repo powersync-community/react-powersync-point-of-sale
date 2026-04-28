@@ -2,13 +2,16 @@ import {
   createContext,
   useContext,
   useCallback,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import { useLiveQuery } from "@tanstack/react-db";
 import { eq, and } from "@tanstack/db";
 import { powerSync } from "@/powersync/System";
+import { connector } from "@/powersync/SupabaseConnector";
 import { SALES_TABLE, SALE_ITEMS_TABLE } from "@/powersync/AppSchema";
 import { generateId } from "@/lib/utils";
 import type { Product } from "@/collections/products";
@@ -74,6 +77,46 @@ export function CartProvider({ children }: CartProviderProps) {
 
   const draftSale = draftSales.length > 0 ? draftSales[0] : null;
   const currentSaleId = draftSale?.id ?? null;
+
+  const currentSaleIdRef = useRef<string | null>(null);
+  const cashierIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    currentSaleIdRef.current = currentSaleId;
+  }, [currentSaleId]);
+
+  useEffect(() => {
+    cashierIdRef.current = cashier?.id ?? null;
+  }, [cashier?.id]);
+
+  useEffect(() => {
+    const handlePageHide = () => {
+      const cashierId = cashierIdRef.current;
+      const saleId = currentSaleIdRef.current;
+      if (!cashierId || !saleId) return;
+
+      // Beacon-style direct DELETE — survives page unload via keepalive.
+      // Cascade on sale_items.sale_id handles items server-side.
+      connector.deleteDraftsForCashier(cashierId);
+
+      // Best-effort local cleanup so the UI is consistent if the page is
+      // restored from bfcache before the server delete propagates back down.
+      powerSync
+        .writeTransaction(async (tx) => {
+          await tx.execute(
+            `DELETE FROM ${SALE_ITEMS_TABLE} WHERE sale_id = ?`,
+            [saleId]
+          );
+          await tx.execute(`DELETE FROM ${SALES_TABLE} WHERE id = ?`, [
+            saleId,
+          ]);
+        })
+        .catch(() => {});
+    };
+
+    window.addEventListener("pagehide", handlePageHide);
+    return () => window.removeEventListener("pagehide", handlePageHide);
+  }, []);
 
   const { data: rawSaleItems = [], isLoading: itemsLoading } = useLiveQuery(
     (q) =>

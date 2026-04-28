@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@powersync/react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
+import { powerSync } from "@/powersync/System";
 import {
   SALES_TABLE,
   SALE_ITEMS_TABLE,
@@ -13,12 +15,14 @@ interface ActiveSaleRow {
   total_amount: number | null;
   cashier_name: string | null;
   item_count: number | null;
+  created_at: string | null;
 }
 
 const ACTIVE_SALES_QUERY = `
   SELECT
     s.id              AS id,
     s.total_amount    AS total_amount,
+    s.created_at      AS created_at,
     c.name            AS cashier_name,
     COALESCE(
       (SELECT SUM(si.quantity) FROM ${SALE_ITEMS_TABLE} si WHERE si.sale_id = s.id),
@@ -30,15 +34,72 @@ const ACTIVE_SALES_QUERY = `
   ORDER BY s.created_at DESC
 `;
 
+function formatRelative(iso: string | null, nowMs: number): string {
+  if (!iso) return "—";
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "—";
+  const diff = Math.max(0, nowMs - then);
+  const seconds = Math.floor(diff / 1000);
+  if (seconds < 5) return "just now";
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+function formatTime(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+async function deleteSale(saleId: string) {
+  try {
+    await powerSync.writeTransaction(async (tx) => {
+      await tx.execute(
+        `DELETE FROM ${SALE_ITEMS_TABLE} WHERE sale_id = ?`,
+        [saleId]
+      );
+      await tx.execute(`DELETE FROM ${SALES_TABLE} WHERE id = ?`, [saleId]);
+    });
+  } catch (err) {
+    console.error("Failed to delete sale:", err);
+  }
+}
+
 export function ActiveSales() {
   const { data: activeSales = [], isLoading: salesLoading } =
     useQuery<ActiveSaleRow>(ACTIVE_SALES_QUERY);
+
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   const totalActiveSales = activeSales.length;
   const totalPendingValue = activeSales.reduce(
     (sum, s) => sum + (s.total_amount ?? 0),
     0
   );
+
+  const handleDelete = (sale: ActiveSaleRow) => {
+    const label = sale.cashier_name ?? "this draft";
+    const ok = window.confirm(
+      `Delete the active draft for "${label}"? This removes the order and its items everywhere.`
+    );
+    if (ok) {
+      void deleteSale(sale.id);
+    }
+  };
 
   return (
     <div className="h-full flex flex-col">
@@ -92,9 +153,11 @@ export function ActiveSales() {
         ) : activeSales.length === 0 ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center max-w-sm">
-              <div className="text-6xl font-bold tracking-tight text-muted-foreground/20 mb-3">
-                00
-              </div>
+              <img
+                src="/icons/powersync-logo.png"
+                alt=""
+                className="mx-auto h-20 w-20 object-contain mb-6 opacity-60 animate-spin [animation-duration:8s]"
+              />
               <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-muted-foreground">
                 waiting for sales
               </p>
@@ -116,14 +179,29 @@ export function ActiveSales() {
                   <span className="text-[10px] font-mono text-muted-foreground/50 tabular-nums">
                     #{String(idx + 1).padStart(2, "0")}
                   </span>
-                  <span className="text-[10px] font-mono text-muted-foreground/40 tabular-nums">
-                    {sale.id.slice(0, 8)}
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(sale)}
+                    aria-label={`Delete draft for ${sale.cashier_name ?? "anonymous"}`}
+                    title="Delete this draft"
+                    className="h-7 w-7 -mr-1 -mt-1 flex items-center justify-center text-muted-foreground/30 hover:text-destructive hover:bg-destructive/10 rounded transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
 
-                <h3 className="text-2xl font-bold tracking-tight truncate mb-4">
+                <h3 className="text-2xl font-bold tracking-tight truncate mb-1">
                   {sale.cashier_name ?? "anonymous"}
                 </h3>
+
+                <div
+                  className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground/60 tabular-nums uppercase tracking-wider mb-4"
+                  title={sale.created_at ?? undefined}
+                >
+                  <span>{formatTime(sale.created_at)}</span>
+                  <span className="text-muted-foreground/30">·</span>
+                  <span>{formatRelative(sale.created_at, now)}</span>
+                </div>
 
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="text-xs text-muted-foreground tabular-nums">

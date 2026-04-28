@@ -1,7 +1,11 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import { powerSync } from "@/powersync/System";
 import { connector } from "@/powersync/SupabaseConnector";
-import { CASHIERS_TABLE } from "@/powersync/AppSchema";
+import {
+  CASHIERS_TABLE,
+  SALES_TABLE,
+  SALE_ITEMS_TABLE,
+} from "@/powersync/AppSchema";
 import { generateId } from "@/lib/utils";
 
 export interface AuthenticatedCashier {
@@ -74,9 +78,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const logout = useCallback(async () => {
+    if (cashier) {
+      try {
+        await powerSync.writeTransaction(async (tx) => {
+          await tx.execute(
+            `DELETE FROM ${SALE_ITEMS_TABLE}
+             WHERE sale_id IN (
+               SELECT id FROM ${SALES_TABLE}
+               WHERE cashier_id = ? AND status = 'draft'
+             )`,
+            [cashier.id]
+          );
+          await tx.execute(
+            `DELETE FROM ${SALES_TABLE}
+             WHERE cashier_id = ? AND status = 'draft'`,
+            [cashier.id]
+          );
+        });
+      } catch (err) {
+        console.error("Failed to clear draft sale on logout:", err);
+      }
+    }
     setCashier(null);
     setError(null);
-  }, []);
+  }, [cashier]);
 
   const clearError = useCallback(() => {
     setError(null);

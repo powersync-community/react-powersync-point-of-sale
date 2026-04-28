@@ -86,6 +86,32 @@ export class SupabaseConnector
   //   this.updateSession(session);
   // }
 
+  /**
+   * Issue a keepalive-style DELETE for any draft sales owned by the cashier.
+   * Used during page unload — `keepalive: true` lets the request survive the
+   * unload, where PowerSync's queued upload may not flush in time. Items
+   * cascade-delete on the server via the FK on sale_items.sale_id.
+   */
+  deleteDraftsForCashier(cashierId: string): void {
+    const session = this.currentSession;
+    if (!session?.access_token) return;
+
+    const url = new URL(`${this.config.supabaseUrl}/rest/v1/sales`);
+    url.searchParams.set("cashier_id", `eq.${cashierId}`);
+    url.searchParams.set("status", "eq.draft");
+
+    fetch(url.toString(), {
+      method: "DELETE",
+      keepalive: true,
+      headers: {
+        apikey: this.config.supabasePublishableKey,
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    }).catch(() => {
+      // best-effort during unload; nothing useful to do on failure
+    });
+  }
+
   async signInAnonymously() {
     const { data: { user } } = await this.client.auth.getUser();
     if (user?.id) return;
