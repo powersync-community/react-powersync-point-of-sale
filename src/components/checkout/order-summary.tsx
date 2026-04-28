@@ -1,5 +1,4 @@
 import { Package } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
 import { formatCurrency } from "@/lib/utils";
 import type { CartItem } from "@/contexts/cart-context";
 
@@ -9,17 +8,26 @@ interface OrderSummaryProps {
 }
 
 export function OrderSummary({ items, total }: OrderSummaryProps) {
-  return (
-    <div className="space-y-4">
-      <h3 className="font-semibold text-lg">Order Summary</h3>
+  const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
-      <div className="space-y-3">
+  return (
+    <div>
+      <div className="mb-6">
+        <span className="text-[10px] font-medium uppercase tracking-[0.3em] text-muted-foreground">
+          your order
+        </span>
+        <h2 className="text-3xl font-bold tracking-tight mt-1">
+          {itemCount}{" "}
+          <span className="text-muted-foreground font-normal text-xl">
+            {itemCount === 1 ? "item" : "items"}
+          </span>
+        </h2>
+      </div>
+
+      <div className="divide-y divide-border/60 border-y border-border/60">
         {items.map((item) => (
-          <div
-            key={item.id}
-            className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg"
-          >
-            <div className="h-12 w-12 rounded-md overflow-hidden bg-muted shrink-0">
+          <div key={item.id} className="flex items-center gap-3 py-4">
+            <div className="h-12 w-12 bg-muted/40 shrink-0 overflow-hidden">
               {item.product.image_url ? (
                 <img
                   src={item.product.image_url}
@@ -28,43 +36,35 @@ export function OrderSummary({ items, total }: OrderSummaryProps) {
                 />
               ) : (
                 <div className="h-full w-full flex items-center justify-center">
-                  <Package className="h-5 w-5 text-muted-foreground" />
+                  <Package className="h-5 w-5 text-muted-foreground/40" />
                 </div>
               )}
             </div>
 
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm truncate">
+              <p className="font-semibold text-sm tracking-tight truncate">
                 {item.product.name}
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[10px] font-mono text-muted-foreground/60 tabular-nums uppercase tracking-wider mt-0.5">
                 {formatCurrency(item.unitPrice)} × {item.quantity}
               </p>
             </div>
 
-            <p className="pos-price text-sm font-semibold">
+            <p className="font-bold text-sm text-primary tabular-nums shrink-0">
               {formatCurrency(item.subtotal)}
             </p>
           </div>
         ))}
       </div>
 
-      <Separator />
-
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Subtotal</span>
+      <div className="mt-6 space-y-2">
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>Subtotal</span>
           <span className="tabular-nums">{formatCurrency(total)}</span>
         </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Tax (0%)</span>
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>Tax</span>
           <span className="tabular-nums">{formatCurrency(0)}</span>
-        </div>
-        <div className="flex justify-between pt-3">
-          <span className="text-xl font-bold">Total</span>
-          <span className="pos-price text-3xl text-primary font-bold">
-            {formatCurrency(total)}
-          </span>
         </div>
       </div>
     </div>

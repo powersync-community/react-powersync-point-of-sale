@@ -1,5 +1,4 @@
-import { Minus, Plus, Trash2, Package } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Minus, Plus, X, Package } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import type { CartItem as CartItemType } from "@/contexts/cart-context";
 
@@ -11,8 +10,8 @@ interface CartItemProps {
 
 export function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
   return (
-    <div className="flex gap-3 p-3 bg-background rounded-lg border border-border group">
-      <div className="h-16 w-16 rounded-md overflow-hidden bg-muted shrink-0">
+    <div className="flex items-center gap-3 px-5 py-3 group">
+      <div className="h-12 w-12 bg-muted/50 shrink-0 overflow-hidden">
         {item.product.image_url ? (
           <img
             src={item.product.image_url}
@@ -21,55 +20,61 @@ export function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
           />
         ) : (
           <div className="h-full w-full flex items-center justify-center">
-            <Package className="h-6 w-6 text-muted-foreground" />
+            <Package className="h-5 w-5 text-muted-foreground/40" />
           </div>
         )}
       </div>
 
       <div className="flex-1 min-w-0">
-        <h4 className="font-medium text-sm truncate">
-          {item.product.name ?? "Unnamed"}
-        </h4>
-        <p className="text-xs text-muted-foreground">
-          {formatCurrency(item.unitPrice)} each
-        </p>
-
-        <div className="flex items-center gap-2 mt-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
-          >
-            <Minus className="h-3 w-3" />
-          </Button>
-          <span className="text-sm font-medium w-8 text-center tabular-nums">
-            {item.quantity}
-          </span>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
-          >
-            <Plus className="h-3 w-3" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 ml-auto text-muted-foreground hover:text-destructive"
-            onClick={() => onRemove(item.product.id)}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
+        <div className="flex items-baseline justify-between gap-2">
+          <h4 className="font-semibold text-sm tracking-tight truncate">
+            {item.product.name ?? "Unnamed"}
+          </h4>
+          <p className="font-bold text-sm text-primary tabular-nums shrink-0">
+            {formatCurrency(item.subtotal)}
+          </p>
         </div>
-      </div>
 
-      <div className="text-right shrink-0">
-        <p className="pos-price text-sm text-primary">
-          {formatCurrency(item.subtotal)}
-        </p>
+        <div className="flex items-center gap-3 mt-2">
+          <div className="inline-flex items-center border border-border">
+            <button
+              type="button"
+              onClick={() =>
+                onUpdateQuantity(item.product.id, item.quantity - 1)
+              }
+              aria-label="Decrease quantity"
+              className="h-9 w-9 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            >
+              <Minus className="h-3.5 w-3.5" />
+            </button>
+            <span className="w-8 text-center text-sm font-semibold tabular-nums">
+              {item.quantity}
+            </span>
+            <button
+              type="button"
+              onClick={() =>
+                onUpdateQuantity(item.product.id, item.quantity + 1)
+              }
+              aria-label="Increase quantity"
+              className="h-9 w-9 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          <span className="text-[10px] font-mono text-muted-foreground/60 tabular-nums hidden sm:inline">
+            @ {formatCurrency(item.unitPrice)}
+          </span>
+
+          <button
+            type="button"
+            onClick={() => onRemove(item.product.id)}
+            aria-label="Remove item"
+            className="ml-auto h-9 w-9 flex items-center justify-center text-muted-foreground/40 hover:text-destructive transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     </div>
   );

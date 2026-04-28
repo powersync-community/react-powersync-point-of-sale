@@ -1,9 +1,6 @@
 import { useQuery } from "@powersync/react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ShoppingCart, User, Activity, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { ArrowLeft } from "lucide-react";
 import {
   SALES_TABLE,
   SALE_ITEMS_TABLE,
@@ -45,111 +42,103 @@ export function ActiveSales() {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center gap-3 mb-4">
-          <Link to="/">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
+      <header className="px-8 pt-8 pb-6 flex items-end justify-between flex-wrap gap-6">
+        <div className="flex items-end gap-4">
+          <Link
+            to="/"
+            className="h-10 w-10 -mb-1 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
           </Link>
           <div>
-            <h1 className="font-bold text-lg flex items-center gap-2">
-              Active Sales
+            <div className="flex items-center gap-3 mb-2">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-60"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
+              </span>
+              <span className="text-[10px] font-medium uppercase tracking-[0.3em] text-muted-foreground">
+                live activity
+              </span>
+            </div>
+            <h1 className="text-4xl font-bold tracking-tight">
+              {totalActiveSales}{" "}
+              <span className="text-muted-foreground font-normal">
+                active {totalActiveSales === 1 ? "sale" : "sales"}
               </span>
             </h1>
-            <p className="text-xs text-muted-foreground">
-              Real-time sales in progress
-            </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 max-w-md">
-          <div className="bg-accent/10 rounded-lg p-3 border border-accent/20">
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Activity className="h-3 w-3" />
-              Active Sales
-            </p>
-            <p className="text-xl font-bold text-accent">{totalActiveSales}</p>
-          </div>
-          <div className="bg-primary/10 rounded-lg p-3 border border-primary/20">
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <ShoppingCart className="h-3 w-3" />
-              Pending Value
-            </p>
-            <p className="text-xl font-bold text-primary">
-              {formatCurrency(totalPendingValue)}
-            </p>
-          </div>
+        <div className="text-right">
+          <span className="text-[10px] font-medium uppercase tracking-[0.3em] text-muted-foreground">
+            pending value
+          </span>
+          <p className="text-4xl font-bold text-primary tabular-nums leading-tight mt-1">
+            {formatCurrency(totalPendingValue)}
+          </p>
         </div>
-      </div>
+      </header>
 
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-auto px-8 pb-8">
         {salesLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 8 }).map((_, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                className="h-32 bg-muted/30 rounded-lg animate-pulse"
+                className="h-32 bg-muted/20 border border-border animate-pulse"
               />
             ))}
           </div>
         ) : activeSales.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-muted-foreground">
-            <div className="text-center">
-              <Activity className="h-16 w-16 mx-auto mb-4 opacity-30" />
-              <p className="font-medium">No active sales</p>
-              <p className="text-sm mt-1">Sales in progress will appear here</p>
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center max-w-sm">
+              <div className="text-6xl font-bold tracking-tight text-muted-foreground/20 mb-3">
+                00
+              </div>
+              <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-muted-foreground">
+                waiting for sales
+              </p>
+              <p className="text-sm text-muted-foreground/60 mt-3 leading-relaxed">
+                Booth orders appear here the moment they start.
+              </p>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {activeSales.map((sale) => (
-              <Card
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {activeSales.map((sale, idx) => (
+              <article
                 key={sale.id}
-                className="border-accent/20 hover:border-accent/40 transition-colors"
+                className="group relative bg-card border border-border hover:border-primary/40 transition-colors p-5 overflow-hidden"
               >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="font-mono text-xs text-muted-foreground">
-                      #{sale.id.slice(0, 8)}
-                    </span>
-                    <Badge
-                      variant="secondary"
-                      className="bg-accent/20 text-accent border-accent/30 text-xs"
-                    >
-                      <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-                      Live
-                    </Badge>
-                  </div>
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-primary/60 via-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
-                      <User className="h-3 w-3 text-primary" />
-                    </div>
-                    <span className="text-sm font-medium truncate">
-                      {sale.cashier_name ?? "Unknown"}
-                    </span>
-                  </div>
+                <div className="flex items-start justify-between mb-1">
+                  <span className="text-[10px] font-mono text-muted-foreground/50 tabular-nums">
+                    #{String(idx + 1).padStart(2, "0")}
+                  </span>
+                  <span className="text-[10px] font-mono text-muted-foreground/40 tabular-nums">
+                    {sale.id.slice(0, 8)}
+                  </span>
+                </div>
 
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">
-                      {sale.item_count ?? 0}{" "}
-                      {sale.item_count === 1 ? "item" : "items"}
-                    </span>
-                    <span className="text-lg font-bold text-primary">
-                      {formatCurrency(sale.total_amount ?? 0)}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
+                <h3 className="text-2xl font-bold tracking-tight truncate mb-4">
+                  {sale.cashier_name ?? "anonymous"}
+                </h3>
+
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {sale.item_count ?? 0}{" "}
+                    {sale.item_count === 1 ? "item" : "items"}
+                  </span>
+                  <span className="text-2xl font-bold text-primary tabular-nums">
+                    {formatCurrency(sale.total_amount ?? 0)}
+                  </span>
+                </div>
+              </article>
             ))}
           </div>
         )}
       </div>
-
     </div>
   );
 }

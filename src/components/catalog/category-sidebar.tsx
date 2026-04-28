@@ -1,6 +1,4 @@
 import { useLiveQuery } from "@tanstack/react-db";
-import { LayoutGrid, Package } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { categoriesCollection } from "@/collections";
 import { cn } from "@/lib/utils";
@@ -8,6 +6,11 @@ import { cn } from "@/lib/utils";
 interface CategorySidebarProps {
   selectedCategory: string | null;
   onSelectCategory: (categoryId: string | null) => void;
+}
+
+interface CategoryOption {
+  id: string | null;
+  name: string;
 }
 
 export function CategorySidebar({
@@ -18,82 +21,65 @@ export function CategorySidebar({
     q.from({ c: categoriesCollection }).orderBy(({ c }) => c.sort_order, "asc")
   );
 
+  const options: CategoryOption[] = [
+    { id: null, name: "All products" },
+    ...categories.map((c) => ({ id: c.id, name: c.name ?? "Unnamed" })),
+  ];
+
   return (
     <div className="h-full flex flex-col border-r border-border">
-      <div className="p-4 border-b border-border">
-        <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
-          Categories
-        </h2>
+      <div className="px-5 pt-6 pb-3">
+        <span className="text-[10px] font-medium uppercase tracking-[0.3em] text-muted-foreground">
+          categories
+        </span>
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-2 space-y-1">
-          <Button
-            variant={selectedCategory === null ? "secondary" : "ghost"}
-            className={cn(
-              "w-full justify-start gap-3 h-12",
-              selectedCategory === null && "bg-primary/10 border border-primary/30"
-            )}
-            onClick={() => onSelectCategory(null)}
-          >
-            <div
-              className={cn(
-                "h-8 w-8 rounded-lg flex items-center justify-center",
-                selectedCategory === null
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted"
-              )}
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </div>
-            <span className="font-medium">All Products</span>
-          </Button>
-
+        <div className="pb-4">
           {isLoading ? (
-            <div className="space-y-2 p-2">
+            <div className="px-5 space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-12 bg-muted/50 rounded-lg animate-pulse"
+                  className="h-5 bg-muted/40 animate-pulse"
+                  style={{ width: `${50 + (i * 7) % 30}%` }}
                 />
               ))}
             </div>
           ) : (
-            categories.map((category) => (
-              <Button
-                key={category.id}
-                variant={selectedCategory === category.id ? "secondary" : "ghost"}
-                className={cn(
-                  "w-full justify-start gap-3 h-12",
-                  selectedCategory === category.id &&
-                    "bg-primary/10 border border-primary/30"
-                )}
-                onClick={() => onSelectCategory(category.id)}
-              >
-                <div
+            options.map((opt) => {
+              const isSelected = selectedCategory === opt.id;
+              return (
+                <button
+                  key={opt.id ?? "__all"}
+                  type="button"
+                  onClick={() => onSelectCategory(opt.id)}
                   className={cn(
-                    "h-8 w-8 rounded-lg flex items-center justify-center overflow-hidden",
-                    selectedCategory === category.id
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted"
+                    "w-full flex items-center gap-3 text-left px-5 py-3 transition-colors group",
+                    isSelected
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  {category.image_url ? (
-                    <img
-                      src={category.image_url}
-                      alt={category.name ?? ""}
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <Package className="h-4 w-4" />
-                  )}
-                </div>
-                <span className="font-medium truncate">
-                  {category.name ?? "Unnamed"}
-                </span>
-              </Button>
-            ))
+                  <span
+                    className={cn(
+                      "block w-px h-5 transition-all",
+                      isSelected
+                        ? "bg-primary w-[2px]"
+                        : "bg-border/50 group-hover:bg-border"
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      "text-sm tracking-tight truncate",
+                      isSelected ? "font-semibold" : "font-medium"
+                    )}
+                  >
+                    {opt.name}
+                  </span>
+                </button>
+              );
+            })
           )}
         </div>
       </ScrollArea>

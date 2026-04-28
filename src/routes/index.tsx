@@ -1,11 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ShoppingCart } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useCart } from "@/contexts/cart-context";
 import { ProductCatalog } from "@/components/catalog/product-catalog";
 import { CartSidebar } from "@/components/cart/cart-sidebar";
-import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -32,42 +31,55 @@ function POSPage() {
     return null;
   }
 
+  const showMobileBar = !isDesktop && itemCount > 0;
+
   return (
     <div className="h-full flex relative">
-      <div className="flex-1 overflow-hidden min-w-0">
+      <div
+        className={`flex-1 overflow-hidden min-w-0 transition-[padding] ${
+          showMobileBar ? "pb-16 md:pb-0" : ""
+        }`}
+      >
         <ProductCatalog />
       </div>
 
       {isDesktop && (
-        <div className="w-96 border-l border-border shrink-0">
+        <div className="w-[22rem] border-l border-border shrink-0">
           <CartSidebar />
         </div>
       )}
 
-      {!isDesktop && (
-        <Button
-          size="lg"
-          className="fixed bottom-4 right-4 h-14 px-6 shadow-lg z-40 gap-2"
+      {showMobileBar && (
+        <button
+          type="button"
           onClick={() => setIsCartOpen(true)}
+          className="fixed bottom-0 inset-x-0 z-40 h-16 bg-primary text-primary-foreground flex items-center justify-between px-5 md:hidden hover:bg-primary/95 transition-colors animate-in slide-in-from-bottom"
         >
-          <ShoppingCart className="h-5 w-5" />
-          {itemCount > 0 ? (
-            <>
-              <span className="font-semibold">{itemCount}</span>
-              <span className="text-primary-foreground/80">•</span>
-              <span className="font-semibold">{formatCurrency(total)}</span>
-            </>
-          ) : (
-            <span>Cart</span>
-          )}
-        </Button>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold tabular-nums">
+              {itemCount}
+            </span>
+            <span className="text-[10px] font-medium uppercase tracking-[0.3em] opacity-80">
+              {itemCount === 1 ? "item" : "items"}
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xl font-bold tabular-nums">
+              {formatCurrency(total)}
+            </span>
+            <span className="text-[10px] font-medium uppercase tracking-[0.3em] opacity-80">
+              review
+            </span>
+            <ArrowRight className="h-4 w-4" />
+          </div>
+        </button>
       )}
 
       <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-md p-0">
-          <SheetTitle className="sr-only">Shopping Cart</SheetTitle>
+        <SheetContent side="right" className="w-full sm:max-w-md p-0 bg-sidebar">
+          <SheetTitle className="sr-only">Current order</SheetTitle>
           <SheetDescription className="sr-only">
-            View and manage items in your shopping cart
+            Review and manage items in your current order
           </SheetDescription>
           <CartSidebar onClose={() => setIsCartOpen(false)} />
         </SheetContent>

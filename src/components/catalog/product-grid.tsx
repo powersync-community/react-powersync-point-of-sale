@@ -1,10 +1,9 @@
 import { useLiveQuery } from "@tanstack/react-db";
 import { eq, like, or } from "@tanstack/db";
-import { Search, PackageX, Menu } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Search, PackageX, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ProductCard } from "./product-card";
+import { CategoryRail } from "./category-rail";
 import { productsCollection } from "@/collections";
 import { useCart } from "@/contexts/cart-context";
 
@@ -12,16 +11,16 @@ interface ProductGridProps {
   selectedCategory: string | null;
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  onOpenCategories?: () => void;
-  showCategoryButton?: boolean;
+  onSelectCategory: (categoryId: string | null) => void;
+  showRail: boolean;
 }
 
 export function ProductGrid({
   selectedCategory,
   searchQuery,
   onSearchChange,
-  onOpenCategories,
-  showCategoryButton = false,
+  onSelectCategory,
+  showRail,
 }: ProductGridProps) {
   const { addItem } = useCart();
 
@@ -49,58 +48,63 @@ export function ProductGrid({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-4 border-b border-border">
-        <div className="flex gap-2">
-          {showCategoryButton && (
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-11 w-11 shrink-0"
-              onClick={onOpenCategories}
-              aria-label="Open categories"
+      <div className="px-4 pt-4 pb-2 md:px-6 md:pt-6">
+        <div className="relative">
+          <Search className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+          <input
+            placeholder="Search products or SKU…"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full bg-transparent border-0 border-b border-border focus:border-primary text-base h-11 pl-7 pr-8 placeholder:text-muted-foreground/40 focus:outline-none transition-colors"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => onSearchChange("")}
+              aria-label="Clear search"
+              className="absolute right-0 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center text-muted-foreground/60 hover:text-foreground transition-colors"
             >
-              <Menu className="h-5 w-5" />
-            </Button>
+              <X className="h-4 w-4" />
+            </button>
           )}
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-10 h-11"
-            />
-          </div>
         </div>
       </div>
 
+      {showRail && (
+        <CategoryRail
+          selectedCategory={selectedCategory}
+          onSelectCategory={onSelectCategory}
+        />
+      )}
+
       <ScrollArea className="flex-1">
-        <div className="p-4">
+        <div className="p-4 md:p-6">
           {isLoading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
               {Array.from({ length: 10 }).map((_, i) => (
-                <div key={i} className="pos-card animate-pulse">
-                  <div className="aspect-square bg-muted rounded-lg mb-3" />
-                  <div className="space-y-2">
-                    <div className="h-4 bg-muted rounded w-3/4" />
-                    <div className="h-3 bg-muted rounded w-1/2" />
-                    <div className="h-5 bg-muted rounded w-1/3" />
+                <div key={i} className="bg-card border border-border">
+                  <div className="aspect-square bg-muted/40 animate-pulse" />
+                  <div className="p-3 space-y-2">
+                    <div className="h-3 bg-muted/40 animate-pulse w-3/4" />
+                    <div className="h-3 bg-muted/40 animate-pulse w-1/3" />
                   </div>
                 </div>
               ))}
             </div>
           ) : products.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <PackageX className="h-16 w-16 mb-4" />
-              <h3 className="text-lg font-medium">No products found</h3>
-              <p className="text-sm">
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <PackageX className="h-10 w-10 mb-4 text-muted-foreground/40" />
+              <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-muted-foreground">
+                no matches
+              </p>
+              <p className="text-sm text-muted-foreground/60 mt-2 max-w-xs">
                 {searchQuery
-                  ? "Try adjusting your search terms"
-                  : "No products in this category"}
+                  ? "Try a different search term."
+                  : "Nothing in this category yet."}
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
               {products.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -112,10 +116,6 @@ export function ProductGrid({
           )}
         </div>
       </ScrollArea>
-
-      <div className="p-2 text-center text-xs text-muted-foreground">
-        {products.length} product{products.length !== 1 && "s"} found
-      </div>
     </div>
   );
 }

@@ -255,6 +255,15 @@
   min-width: 44px;
 }
 
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 .pos-card {
   background-color: var(--color-card);
   border-radius: var(--radius-lg);
