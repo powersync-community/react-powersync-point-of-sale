@@ -9,18 +9,6 @@ import { cn } from "@/lib/utils";
 function BoothLoginLoading() {
   return (
     <div className="w-full max-w-2xl">
-      <div className="flex items-center justify-between mb-16">
-        <div className="flex items-center gap-3">
-          <img
-            src="/icons/powersync-logo.png"
-            alt="PowerSync"
-            className="h-7 w-7 object-contain opacity-90"
-          />
-          <span className="text-[10px] font-medium uppercase tracking-[0.3em] text-muted-foreground">
-            powersync · pos
-          </span>
-        </div>
-      </div>
       <div className="flex flex-col items-center text-center py-16">
         <img
           src="/icons/powersync-logo.png"
