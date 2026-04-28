@@ -68,8 +68,8 @@ export function CartProvider({ children }: CartProviderProps) {
         .from({ sale: salesCollection })
         .where(({ sale }) =>
           and(
-            eq(sale.cashier_id, cashier?.id ?? ""),
-            eq(sale.status, "draft")
+            eq(sale.cashier_id as string | null, cashier?.id ?? ""),
+            eq(sale.status as string, "draft")
           )
         ),
     [cashier?.id]
@@ -122,7 +122,7 @@ export function CartProvider({ children }: CartProviderProps) {
     (q) =>
       q
         .from({ si: saleItemsCollection })
-        .where(({ si }) => eq(si.sale_id, currentSaleId ?? ""))
+        .where(({ si }) => eq(si.sale_id as string | null, currentSaleId ?? ""))
         .orderBy(({ si }) => si.created_at, "asc"),
     [currentSaleId]
   );

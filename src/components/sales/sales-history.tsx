@@ -49,7 +49,7 @@ export function SalesHistory() {
     (q) =>
       q
         .from({ si: saleItemsCollection })
-        .where(({ si }) => eq(si.sale_id, selectedSale)),
+        .where(({ si }) => eq(si.sale_id as string | null, selectedSale)),
     [selectedSale]
   );
 

@@ -14,23 +14,16 @@ export const SALE_STATUS = {
 export type SaleStatus = (typeof SALE_STATUS)[keyof typeof SALE_STATUS];
 
 /**
- * Helper to coerce string values to numbers
- * Handles sync data that may arrive as strings from certain backends
- */
-const coerceNumber = z.preprocess(
-  (val) => (typeof val === "string" ? parseFloat(val) : val),
-  z.number().nullable()
-);
-
-/**
- * Zod schema for Sale records
- * Transforms SQLite types to rich JavaScript types
- * Uses preprocess to handle numeric strings from sync
+ * Zod schema for Sale records.
+ * Input matches the SQLite column types; output transforms to rich JS types.
  */
 export const saleSchema = z.object({
   id: z.string(),
   cashier_id: z.string().nullable(),
-  total_amount: coerceNumber.transform((val) => val ?? 0),
+  total_amount: z
+    .number()
+    .nullable()
+    .transform((val) => val ?? 0),
   status: z
     .string()
     .nullable()
@@ -56,7 +49,6 @@ export const salesCollection = createCollection(
   powerSyncCollectionOptions({
     database: powerSync,
     table: AppSchema.props.sales,
-    // @ts-expect-error - schema input type differs due to preprocess handling strings
     schema: saleSchema,
     onDeserializationError: (error) => {
       console.error("Sale deserialization error:", error);

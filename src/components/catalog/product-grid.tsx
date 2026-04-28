@@ -28,16 +28,21 @@ export function ProductGrid({
     (q) => {
       let query = q
         .from({ p: productsCollection })
-        .where(({ p }) => eq(p.is_active, true));
+        .where(({ p }) => eq(p.is_active as unknown as boolean, true));
 
       if (selectedCategory) {
-        query = query.where(({ p }) => eq(p.category_id, selectedCategory));
+        query = query.where(({ p }) =>
+          eq(p.category_id as string | null, selectedCategory)
+        );
       }
 
       if (searchQuery.trim()) {
         const searchTerm = `%${searchQuery.trim()}%`;
         query = query.where(({ p }) =>
-          or(like(p.name, searchTerm), like(p.sku, searchTerm))
+          or(
+            like(p.name as string | null, searchTerm),
+            like(p.sku as string | null, searchTerm)
+          )
         );
       }
 
