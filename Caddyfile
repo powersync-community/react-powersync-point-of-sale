@@ -26,6 +26,16 @@
     # serve from the 'dist' folder (Vite builds into the 'dist' folder)
     root * dist
 
+    # OPFSCoopSyncVFS (the multi-tab OPFS-backed SQLite VFS PowerSync uses
+    # in `src/powersync/System.ts`) requires a cross-origin isolated context.
+    # Without these headers, PowerSync silently falls back to IndexedDB.
+    # COEP credentialless lets cross-origin resources (Unsplash images,
+    # Google Fonts) load without needing CORP headers on the upstream side.
+    header {
+        Cross-Origin-Opener-Policy "same-origin"
+        Cross-Origin-Embedder-Policy "credentialless"
+    }
+
     # enable gzipping responses
     encode gzip
 

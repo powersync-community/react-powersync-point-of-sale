@@ -76,6 +76,15 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  // Headers required for OPFSCoopSyncVFS — without a cross-origin isolated
+  // context PowerSync falls back to IndexedDB. credentialless lets cross-
+  // origin assets (Unsplash images, Google Fonts) keep loading.
+  server: {
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'credentialless',
+    },
+  },
   worker: {
     format: 'es'
   },

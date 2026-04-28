@@ -3,13 +3,47 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, RefreshCw, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { generateFunnyName } from "@/lib/funny-names";
+import { useSyncReady } from "@/hooks/use-sync-ready";
 import { cn } from "@/lib/utils";
+
+function BoothLoginLoading() {
+  return (
+    <div className="w-full max-w-2xl">
+      <div className="flex items-center justify-between mb-16">
+        <div className="flex items-center gap-3">
+          <img
+            src="/icons/powersync-logo.png"
+            alt="PowerSync"
+            className="h-7 w-7 object-contain opacity-90"
+          />
+          <span className="text-[10px] font-medium uppercase tracking-[0.3em] text-muted-foreground">
+            powersync · pos
+          </span>
+        </div>
+      </div>
+      <div className="flex flex-col items-center text-center py-16">
+        <img
+          src="/icons/powersync-logo.png"
+          alt=""
+          className="h-20 w-20 object-contain mb-8 opacity-80 animate-spin [animation-duration:8s]"
+        />
+        <span className="text-[10px] font-medium uppercase tracking-[0.3em] text-muted-foreground">
+          warming up the booth
+        </span>
+        <p className="text-sm text-muted-foreground/60 mt-3 max-w-xs">
+          Connecting to PowerSync and pulling the catalog…
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export function BoothLogin() {
   const navigate = useNavigate();
   const { loginWithName, isAuthenticating, error, clearError } = useAuth();
   const [name, setName] = useState(() => generateFunnyName());
   const [isEditing, setIsEditing] = useState(false);
+  const syncReady = useSyncReady();
 
   const focusOnMount = useCallback((node: HTMLInputElement | null) => {
     if (node) {
@@ -43,6 +77,10 @@ export function BoothLogin() {
     },
     [handleLogin]
   );
+
+  if (!syncReady) {
+    return <BoothLoginLoading />;
+  }
 
   return (
     <div className="w-full max-w-2xl">
