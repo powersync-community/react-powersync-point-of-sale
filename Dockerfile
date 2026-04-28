@@ -21,6 +21,17 @@ RUN pnpm install --frozen-lockfile
 # Copy local code to the container image.
 COPY . ./
 
+# Vite inlines `import.meta.env.VITE_*` at build time, so these must be
+# present during `pnpm run build` — not just at container runtime. On
+# Railway, set these as service variables; Railway forwards them as
+# build args when the Dockerfile declares ARG with the same name.
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_PUBLISHABLE_KEY
+ARG VITE_POWERSYNC_URL
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY
+ENV VITE_POWERSYNC_URL=$VITE_POWERSYNC_URL
+
 # Build the app.
 RUN pnpm run build
 

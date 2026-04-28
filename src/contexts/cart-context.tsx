@@ -9,18 +9,28 @@ import {
   type ReactNode,
 } from "react";
 import { useLiveQuery } from "@tanstack/react-db";
-import { eq, and } from "@tanstack/db";
+import { useQuery } from "@powersync/react";
 import { powerSync } from "@/powersync/System";
 import { connector } from "@/powersync/SupabaseConnector";
 import { SALES_TABLE, SALE_ITEMS_TABLE } from "@/powersync/AppSchema";
 import { generateId } from "@/lib/utils";
 import type { Product } from "@/collections/products";
-import {
-  salesCollection,
-  saleItemsCollection,
-  productsCollection,
-} from "@/collections";
+import { productsCollection } from "@/collections";
 import { useAuth } from "./auth-context";
+
+interface DraftSaleRow {
+  id: string;
+}
+
+interface SaleItemRow {
+  id: string;
+  sale_id: string | null;
+  product_id: string | null;
+  quantity: number | null;
+  unit_price: number | null;
+  subtotal: number | null;
+  created_at: string | null;
+}
 
 export interface CartItem {
   id: string;
@@ -62,21 +72,16 @@ export function CartProvider({ children }: CartProviderProps) {
   const { cashier } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const { data: draftSales = [], isLoading: salesLoading } = useLiveQuery(
-    (q) =>
-      q
-        .from({ sale: salesCollection })
-        .where(({ sale }) =>
-          and(
-            eq(sale.cashier_id as string | null, cashier?.id ?? ""),
-            eq(sale.status as string, "draft")
-          )
-        ),
-    [cashier?.id]
-  );
+  const { data: draftSales = [], isLoading: salesLoading } =
+    useQuery<DraftSaleRow>(
+      `SELECT id FROM ${SALES_TABLE}
+       WHERE cashier_id = ? AND status = 'draft'
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [cashier?.id ?? ""]
+    );
 
-  const draftSale = draftSales.length > 0 ? draftSales[0] : null;
-  const currentSaleId = draftSale?.id ?? null;
+  const currentSaleId = draftSales.length > 0 ? draftSales[0].id : null;
 
   const currentSaleIdRef = useRef<string | null>(null);
   const cashierIdRef = useRef<string | null>(null);
@@ -118,14 +123,14 @@ export function CartProvider({ children }: CartProviderProps) {
     return () => window.removeEventListener("pagehide", handlePageHide);
   }, []);
 
-  const { data: rawSaleItems = [], isLoading: itemsLoading } = useLiveQuery(
-    (q) =>
-      q
-        .from({ si: saleItemsCollection })
-        .where(({ si }) => eq(si.sale_id as string | null, currentSaleId ?? ""))
-        .orderBy(({ si }) => si.created_at, "asc"),
-    [currentSaleId]
-  );
+  const { data: rawSaleItems = [], isLoading: itemsLoading } =
+    useQuery<SaleItemRow>(
+      `SELECT id, sale_id, product_id, quantity, unit_price, subtotal, created_at
+       FROM ${SALE_ITEMS_TABLE}
+       WHERE sale_id = ?
+       ORDER BY created_at ASC`,
+      [currentSaleId ?? ""]
+    );
 
   const { data: products = [] } = useLiveQuery((q) =>
     q.from({ p: productsCollection })
